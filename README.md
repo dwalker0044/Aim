@@ -32,6 +32,13 @@ Project
 -- demo
   -- main.cpp
 ```
+Where the directories inside build should be for each target you want to compile for. For now we have one target `windows-clang_cl-debug`, which indicates
+that the target is for the `Windows` operating system, using the `clang-cl` compiler and is a `debug` build.
+
+Examples of other targets could be:
+* windows-clang\_cl-release
+* debian-clang-debug
+* ubuntu-clang-asan
 
 
 Fill out the `target.toml` file:
@@ -48,15 +55,15 @@ flags = [
 
 defines = []
 
-[Builds]
-    [Builds.demo]
-        buildRule = "exe"
-        requires = ["parameterestimation"]
-        exeName = "Demo.exe"
-        srcDirs = ["../../demo"]
-        includePaths = []
-        libraryPaths = []
-        libraries = []
+[[Builds]]
+    name = "demo"
+    buildRule = "exe"
+    requires = []
+    outputName = "Demo.exe"
+    srcDirs = ["../../demo"]
+    includePaths = []
+    libraryPaths = []
+    libraries = []
 ```
 
 Write hello world in `main.cpp`.
