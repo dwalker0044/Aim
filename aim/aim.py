@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import *
 
 import toml
-from schema import target_schema
 
+from aim.schema import target_schema
 
 # Convenient typedefs
 #
@@ -105,6 +105,7 @@ def msvc_static_build_process(cxxflags: StringList, files: PathList, defines: Op
     print(f"CXXFLAGS: {cxxflags}")
     print(f"DEFINES: {defines}")
     print(f"INCLUDE_PATHS: {includes}")
+    print(f"FILES: {to_str(files)}")
     print("")
     result = subprocess.run(
         [CompilerCpp, "/c"] + cxxflags + defines + includes + to_str(files), capture_output=True)
@@ -142,8 +143,8 @@ def build_static_library(build, cxxflags: Optional[StringList] = None, defines: 
     library_name = build["outputName"]
 
     include_paths = PrefixIncludePath(to_paths(build["includePaths"]))
-    src_paths = build["srcDirs"]
-    src_files = flatten(glob("*.cpp", to_paths(src_paths)))
+    src_paths = to_paths(build["srcDirs"])
+    src_files = flatten(glob("*.cpp", src_paths))
     objs = ToObjectFiles(src_files)
 
     StaticBuildProcess(cxxflags, src_files, defines, include_paths)
@@ -222,9 +223,9 @@ def gcc_build_dynamic_library(build: Dict, cxxflags: Optional[StringList] = None
     cxxflags = [] if cxxflags is None else cxxflags
     defines = [] if defines is None else defines
 
-    includes = build["includePaths"]
-    src_paths = build["srcDirs"]
-    src_files = to_str(flatten(glob("*.cpp", to_paths(src_paths))))
+    includes = PrefixIncludePath(to_paths(build["includePaths"]))
+    src_paths = to_paths(build["srcDirs"])
+    src_files = to_str(flatten(glob("*.cpp", src_paths)))
 
     lib_name = build["outputName"]
     library_paths = PrefixLibraryPath(to_paths(["libraryPaths"]))
@@ -239,7 +240,7 @@ def gcc_build_dynamic_library(build: Dict, cxxflags: Optional[StringList] = None
     print(f"LIBRARY_PATHS: {library_paths}")
     print(f"LIBRARIES: {libraries}")
     result = subprocess.run(
-        ["clang-cl"] + cxxflags + defines + includes + src_files + ["-o" + lib_name] + linker_args,
+        ["clang-cl"] + cxxflags + defines + includes + to_str(src_files) + ["-o" + lib_name] + linker_args,
         capture_output=True)
 
     if result.returncode != 0:
@@ -256,9 +257,9 @@ def msvc_build_dynamic_library(build: Dict, cxxflags: Optional[StringList] = Non
     cxxflags = [] if cxxflags is None else cxxflags
     defines = [] if defines is None else defines
 
-    includes = build["includePaths"]
-    src_paths = build["srcDirs"]
-    src_files = to_str(flatten(glob("*.cpp", to_paths(src_paths))))
+    includes = PrefixIncludePath(to_paths(build["includePaths"]))
+    src_paths = to_paths(build["srcDirs"])
+    src_files = to_str(flatten(glob("*.cpp", src_paths)))
 
     lib_name = build["outputName"]
     library_paths = PrefixLibraryPath(to_paths(["libraryPaths"]))
@@ -273,7 +274,7 @@ def msvc_build_dynamic_library(build: Dict, cxxflags: Optional[StringList] = Non
     print(f"LIBRARY_PATHS: {library_paths}")
     print(f"LIBRARIES: {libraries}")
     result = subprocess.run(
-        ["clang-cl"] + cxxflags + defines + includes + src_files + ["/link", "/DLL", "/out:" + lib_name] + linker_args,
+        ["clang-cl"] + cxxflags + defines + includes + to_str(src_files) + ["/link", "/DLL", "/out:" + lib_name] + linker_args,
         capture_output=True)
 
     if result.returncode != 0:
@@ -283,8 +284,6 @@ def msvc_build_dynamic_library(build: Dict, cxxflags: Optional[StringList] = Non
         print("Build Failed.")
         print("-----------------")
         exit(1)
-
-
 
 
 def parse_toml_file(build_name: str):
