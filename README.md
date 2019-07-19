@@ -55,7 +55,7 @@ flags = [
 
 defines = []
 
-[[Builds]]
+[[builds]]
     name = "demo"
     buildRule = "exe"
     requires = []
