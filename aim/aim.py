@@ -359,6 +359,6 @@ def run_build_rule(build: Dict, flags: StringList, defines: StringList):
         DynamicBuildProcess(build, flags, defines)
 
 
-def exec():
+def execute():
     build_arg = sys.argv[1]
     parse_toml_file(build_arg)

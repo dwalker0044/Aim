@@ -9,7 +9,6 @@ setuptools.setup(
     long_description=open('README.md').read(),
     install_requires=["toml", "cerberus"],
     entry_points={
-        "console_scripts": ["aim=bin.entry:main"]
-
+        "console_scripts": ["aim=aim.aim:execute"]
     }
 )
