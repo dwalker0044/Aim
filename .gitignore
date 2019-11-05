@@ -131,6 +131,7 @@ dmypy.json
 *.obj
 *.lib
 *.dll
+*.exp
 *.exe
 .ninja_deps
 .ninja_log

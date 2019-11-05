@@ -11,6 +11,30 @@ PrefixLibrary = functools.partial(prefix, "")
 ToObjectFiles = src_to_obj
 
 
+def implicit_library_inputs(libraries):
+    implicits = []
+    for library in libraries:
+        parts = library.split(".")
+        if parts[1] == "dll":
+            implicits.append(parts[0] + ".exp")
+            implicits.append(parts[0] + ".lib")
+        implicits.append(library)
+
+    return implicits
+
+
+def convert_dlls_to_lib(libraries):
+    new_libraries = []
+    for library in libraries:
+        parts = library.split(".")
+        if parts[1] == "dll":
+            new_libraries.append(parts[0] + ".lib")
+        else:
+            new_libraries.append(library)
+
+    return new_libraries
+
+
 class MSVCBuilds:
     def __init__(self, nfw: Writer, cxx_compiler, c_compiler, archiver):
         self.nfw = nfw
@@ -41,8 +65,8 @@ class MSVCBuilds:
         assert src_files, "Fail to find any source files."
         obj_files = ToObjectFiles(src_files)
 
-        includes = build["includePaths"]
-        include_paths = append_paths(directory, includes)
+        include_paths = build.get("includePaths", [])
+        include_paths = append_paths(directory, include_paths)
         includes = PrefixIncludePath(include_paths)
 
         builder = WindowsBuildRules(self.nfw, self.cxx_compiler)
@@ -79,18 +103,19 @@ class MSVCBuilds:
         src_files = flatten(glob("*.cpp", src_paths))
         assert src_files, "Fail to find any source files."
 
-        includes = getattr(build, "includePaths", [])
-        include_paths = append_paths(directory, includes)
+        include_paths = build.get("includePaths", [])
+        include_paths = append_paths(directory, include_paths)
         includes = PrefixIncludePath(include_paths)
 
-        library_paths = getattr(build, "libraryPaths", [])
+        library_paths = build.get("libraryPaths", [])
         library_paths = append_paths(directory, library_paths)
         library_paths = PrefixLibraryPath(library_paths)
 
-        libraries = getattr(build, "libraries", [])
-        libraries = PrefixLibrary(libraries)
+        libraries = build.get("libraries", [])
+        implicits = implicit_library_inputs(libraries)
+        link_libraries = PrefixLibrary(convert_dlls_to_lib(libraries))
 
-        linker_args = library_paths + libraries
+        linker_args = library_paths + link_libraries
 
         builder = WindowsBuildRules(self.nfw, self.cxx_compiler)
         builder.add_exe(exe_name,
@@ -101,7 +126,8 @@ class MSVCBuilds:
 
         self.nfw.build(outputs=exe_name,
                        rule="exe",
-                       inputs=to_str(src_files))
+                       inputs=to_str(src_files),
+                       implicit=implicits)
         self.nfw.newline()
 
         print("Building executable...")
@@ -123,19 +149,19 @@ class MSVCBuilds:
         src_files = flatten(glob("*.cpp", src_paths))
         assert src_files, "Fail to find any source files."
 
-        # TODO: remember some of the things are optional.
-        includes = getattr(build, "includePaths", [])
-        include_paths = append_paths(directory, includes)
+        include_paths = build.get("includePaths", [])
+        include_paths = append_paths(directory, include_paths)
         includes = PrefixIncludePath(include_paths)
 
-        library_paths = getattr(build, "libraryPaths", [])
+        library_paths = build.get("libraryPaths", [])
         library_paths = append_paths(directory, library_paths)
         library_paths = PrefixLibraryPath(library_paths)
 
-        libraries = getattr(build, "libraries", [])
-        libraries = PrefixLibrary(libraries)
+        libraries = build.get("libraries", [])
+        implicits = implicit_library_inputs(libraries)
+        link_libraries = PrefixLibrary(convert_dlls_to_lib(libraries))
 
-        linker_args = library_paths + libraries
+        linker_args = library_paths + link_libraries
 
         builder = WindowsBuildRules(self.nfw, self.cxx_compiler)
         builder.add_shared(lib_name,
@@ -143,9 +169,18 @@ class MSVCBuilds:
                            cxxflags,
                            includes,
                            linker_args)
+
+        name = lib_name.split(".")[0]
+        implicit_outputs = [
+            name + ".lib",
+            name + ".exp"
+        ]
+
         self.nfw.build(rule="shared",
                        inputs=to_str(src_files),
-                       outputs=lib_name)
+                       outputs=lib_name,
+                       implicit=implicits,
+                       implicit_outputs=implicit_outputs)
         self.nfw.newline()
 
         print("Building dynamic library...")

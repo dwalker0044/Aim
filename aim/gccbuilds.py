@@ -100,7 +100,8 @@ class GCCBuilds:
 
         self.nfw.build(outputs=exe_name,
                        rule="exe",
-                       inputs=to_str(src_files))
+                       inputs=to_str(src_files),
+                       implicit=libraries)
         self.nfw.newline()
 
         print("Building executable...")
@@ -143,7 +144,8 @@ class GCCBuilds:
                                 linker_args)
         self.nfw.build(rule="shared",
                        inputs=to_str(src_files),
-                       outputs=lib_name)
+                       outputs=lib_name,
+                       implicit=libraries)
         self.nfw.newline()
 
         print("Building dynamic library...")
