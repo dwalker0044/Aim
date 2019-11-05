@@ -70,19 +70,19 @@ def parse_toml_file(parsed_toml, NinjaWriter, build_name: str, project_dir: Path
     # Write all the build rules so the ninja file does not need to be rewritten each time.
     generate_build_rules(builder, project_dir, parsed_toml)
 
-    builds = parsed_toml["builds"]
-    the_build = find_build(build_name, builds)
+    # builds = parsed_toml["builds"]
+    # the_build = find_build(build_name, builds)
 
     # Remember, dependencies are build in the order specified. Might need to
     # update this in the future if we ever to more complex dependency resolution.
-    requires = the_build["requires"]
+    # requires = the_build["requires"]
 
-    for dependency in requires:
-        dep_build = find_build(dependency, builds)
-        run_ninja(dep_build)
+    # for dependency in requires:
+    #     dep_build = find_build(dependency, builds)
+    #     run_ninja(dep_build)
         # builder.build(dep_build)
 
-    run_ninja(the_build)
+    # run_ninja(the_build)
     # builder.build(the_build)
 
 

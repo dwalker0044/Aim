@@ -13,7 +13,6 @@ defines = []
 [[builds]]
     name = "windowsstatic"
     buildRule = "staticlib"
-    requires = []
     outputName = "libWindowsProject.lib"
     srcDirs = ["../libProject"]
     includePaths = ["../libProject"]
@@ -21,7 +20,6 @@ defines = []
 [[builds]]
     name = "windowsshared"
     buildRule = "dynamiclib"
-    requires = []
     outputName = "windowsshared.dll"
     srcDirs = ["../libProject"]
     includePaths = ["../libProject"]
@@ -29,9 +27,9 @@ defines = []
 [[builds]]
     name = "windowsexe"
     buildRule = "exe"
-    requires = ["windowsshared"]
     outputName = "windowsproject.exe"
     srcDirs = ["../app"]
     includePaths = ["../libProject"]
     libraryPaths = ["./"]
     libraries = ["windowsshared.dll"]
+#    thirdPartyLibraries = ["eigen.dll"]
