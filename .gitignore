@@ -125,3 +125,14 @@ dmypy.json
 
 # Pycharm project files
 .idea
+
+# C / Cpp build artifacts
+*.o
+*.obj
+*.lib
+*.dll
+*.exe
+.ninja_deps
+.ninja_log
+build.ninja
+

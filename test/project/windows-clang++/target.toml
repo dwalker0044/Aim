@@ -1,0 +1,34 @@
+cxx = "clang++"
+cc = "clang"
+ar = "llvm-ar"
+compilerFrontend="gcc"
+
+flags = [
+    "-std=c++17",
+]
+
+defines = []
+
+[[builds]]
+    name = "static"
+    buildRule = "staticlib"
+    requires = []
+    outputName = "libWindowsProject.lib"
+    srcDirs = ["../lib"]
+    includePaths = ["./lib"]
+
+[[builds]]
+    name = "shared"
+    buildRule = "dynamiclib"
+    requires = []
+    outputName = "sharedWindowsProject.dll"
+    srcDirs = ["../lib"]
+    includePaths = ["../lib"]
+
+[[builds]]
+    name = "exe"
+    buildRule = "exe"
+    requires = []
+    outputName = "project.exe"
+    srcDirs = ["../app", "../lib"]
+    includePaths = ["../lib"]
