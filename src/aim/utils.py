@@ -38,4 +38,8 @@ def suffix(the_suffix, paths) -> StringList:
 
 
 def append_paths(base_path: Path, other_paths: PathList):
-    return [base_path / the_path for the_path in other_paths]
+    return resolve([base_path / the_path for the_path in other_paths])
+
+
+def resolve(paths: PathList):
+    return [path.resolve() for path in paths]

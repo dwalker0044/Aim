@@ -19,6 +19,10 @@ class GCCBuilds:
         self.archiver = archiver
         self.builder = GCCBuildRules(self.nfw, self.cxx_compiler)
 
+        self.static_rule_added = False
+        self.dynamic_rule_added = False
+        self.exe_rule_added = False
+
     def build(self, build):
         the_build = build["buildRule"]
         if the_build == "staticlib":
@@ -47,8 +51,11 @@ class GCCBuilds:
         include_paths = append_paths(directory, includes)
         includes = PrefixIncludePath(include_paths)
 
-        self.builder.add_compile(cxxflags, defines, includes)
-        self.builder.add_ar()
+        if not self.static_rule_added:
+            self.builder.add_compile(cxxflags, defines, includes)
+            self.builder.add_ar()
+
+        self.static_rule_added = True
 
         self.nfw.build(outputs=[],
                        implicit_outputs=obj_files,
@@ -102,11 +109,13 @@ class GCCBuilds:
 
         linker_args = library_paths + libraries + third_libraries
 
-        self.builder.add_exe(exe_name,
-                             defines,
-                             cxxflags,
-                             includes,
-                             linker_args)
+        if not self.exe_rule_added:
+            self.builder.add_exe(exe_name,
+                                 defines,
+                                 cxxflags,
+                                 includes,
+                                 linker_args)
+        self.exe_rule_added = True
 
         self.nfw.build(outputs=exe_name,
                        rule="exe",
@@ -155,11 +164,14 @@ class GCCBuilds:
 
         linker_args = library_paths + libraries + third_libraries
 
-        self.builder.add_shared(lib_name,
-                                defines,
-                                cxxflags,
-                                includes,
-                                linker_args)
+        if not self.dynamic_rule_added:
+            self.builder.add_shared(lib_name,
+                                    defines,
+                                    cxxflags,
+                                    includes,
+                                    linker_args)
+        self.dynamic_rule_added = True
+
         self.nfw.build(rule="shared",
                        inputs=to_str(src_files),
                        outputs=lib_name,
