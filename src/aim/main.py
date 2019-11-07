@@ -31,7 +31,8 @@ def find_build(build_name, builds):
 
 def run_ninja(working_dir, build_name):
     command = ["ninja", build_name]
-    print(" ".join(command) + " ...")
+    command_str = " ".join(command)
+    print(f"Executing \"{command_str}\"")
     result = subprocess.run(command, cwd=str(working_dir), capture_output=True)
     if result.stdout:
         print(result.stdout.decode("utf-8"))
@@ -70,7 +71,6 @@ def entry():
                         help='Path to target directory')
 
     args = parser.parse_args()
-    print(args)
 
     project_dir = Path().cwd()
     if args.path:

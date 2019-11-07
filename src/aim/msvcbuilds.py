@@ -90,13 +90,13 @@ class MSVCBuilds:
                        outputs=build_name)
         self.nfw.newline()
 
-        print("Static library build information...")
-        print(f"LIBNAME: {library_name}")
-        print(f"CXXFLAGS: {cxxflags}")
-        print(f"DEFINES: {defines}")
-        print(f"INCLUDE_PATHS: {includes}")
-        print(f"FILES: {to_str(src_files)}")
-        print("")
+        # print("Static library build information...")
+        # print(f"LIBNAME: {library_name}")
+        # print(f"CXXFLAGS: {cxxflags}")
+        # print(f"DEFINES: {defines}")
+        # print(f"INCLUDE_PATHS: {includes}")
+        # print(f"FILES: {to_str(src_files)}")
+        # print("")
 
     def build_executable(self, build: Dict):
         build_name = build["name"]
@@ -145,13 +145,13 @@ class MSVCBuilds:
                        outputs=build_name)
         self.nfw.newline()
 
-        print("Building executable...")
-        print(f"CXXFLAGS: {cxxflags}")
-        print(f"DEFINES: {defines}")
-        print(f"INCLUDE_PATHS: {includes}")
-        print(f"LIBRARY_PATHS: {library_paths}")
-        print(f"LIBRARIES: {libraries}")
-        print("")
+        # print("Building executable...")
+        # print(f"CXXFLAGS: {cxxflags}")
+        # print(f"DEFINES: {defines}")
+        # print(f"INCLUDE_PATHS: {includes}")
+        # print(f"LIBRARY_PATHS: {library_paths}")
+        # print(f"LIBRARIES: {libraries}")
+        # print("")
 
     def build_dynamic_library(self, build: Dict):
         build_name = build["name"]
@@ -207,10 +207,10 @@ class MSVCBuilds:
                        outputs=build_name)
         self.nfw.newline()
 
-        print("Building dynamic library...")
-        print(f"CXXFLAGS: {cxxflags}")
-        print(f"DEFINES: {defines}")
-        print(f"INCLUDE_PATHS: {includes}")
-        print(f"LIBRARY_PATHS: {library_paths}")
-        print(f"LIBRARIES: {libraries}")
-        print("")
+        # print("Building dynamic library...")
+        # print(f"CXXFLAGS: {cxxflags}")
+        # print(f"DEFINES: {defines}")
+        # print(f"INCLUDE_PATHS: {includes}")
+        # print(f"LIBRARY_PATHS: {library_paths}")
+        # print(f"LIBRARIES: {libraries}")
+        # print("")
