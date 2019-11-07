@@ -41,8 +41,8 @@ def run_ninja(working_dir, build_name):
 
 
 def parse_toml_file(parsed_toml, NinjaWriter, project_dir: Path):
-    compiler_c = parsed_toml["cxx"]
-    compiler_cpp = parsed_toml["cc"]
+    compiler_c = parsed_toml["cc"]
+    compiler_cpp = parsed_toml["cxx"]
     archiver = parsed_toml["ar"]
     frontend = parsed_toml["compilerFrontend"]
 
@@ -71,10 +71,15 @@ def entry():
                         help='Path to target directory')
 
     args = parser.parse_args()
-
     project_dir = Path().cwd()
-    if args.path:
-        project_dir = project_dir / Path(args.path)
+
+    target_path = args.path
+    if target_path:
+        target_path = Path(target_path)
+        if target_path.is_absolute():
+            project_dir = target_path
+        else:
+            project_dir = project_dir / Path(target_path)
 
     ninja_path = project_dir / "build.ninja"
     toml_path = project_dir / "target.toml"

@@ -86,18 +86,18 @@ class GCCBuilds:
         src_files = flatten(glob("*.cpp", src_paths))
         assert src_files, "Fail to find any source files."
 
-        includes = getattr(build, "includePaths", [])
+        includes = build.get("includePaths", [])
         include_paths = append_paths(directory, includes)
         includes = PrefixIncludePath(include_paths)
 
-        library_paths = getattr(build, "libraryPaths", [])
+        library_paths = build.get("libraryPaths", [])
         library_paths = append_paths(directory, library_paths)
         library_paths = PrefixLibraryPath(library_paths)
 
-        libraries = getattr(build, "libraries", [])
+        libraries = build.get("libraries", [])
         libraries = PrefixLibrary(libraries)
 
-        third_libraries = getattr(build, "thirdPartyLibraries", [])
+        third_libraries = build.get("thirdPartyLibraries", [])
         third_libraries = PrefixLibrary(third_libraries)
 
         linker_args = library_paths + libraries + third_libraries
@@ -139,18 +139,18 @@ class GCCBuilds:
         src_files = flatten(glob("*.cpp", src_paths))
         assert src_files, "Fail to find any source files."
 
-        includes = getattr(build, "includePaths", [])
+        includes = build.get("includePaths", [])
         include_paths = append_paths(directory, includes)
         includes = PrefixIncludePath(include_paths)
 
-        library_paths = getattr(build, "libraryPaths", [])
+        library_paths = build.get("libraryPaths", [])
         library_paths = append_paths(directory, library_paths)
         library_paths = PrefixLibraryPath(library_paths)
 
-        libraries = getattr(build, "libraries", [])
+        libraries = build.get("libraries", [])
         libraries = PrefixLibrary(libraries)
 
-        third_libraries = getattr(build, "thirdPartyLibraries", [])
+        third_libraries = build.get("thirdPartyLibraries", [])
         third_libraries = PrefixLibrary(third_libraries)
 
         linker_args = library_paths + libraries + third_libraries
