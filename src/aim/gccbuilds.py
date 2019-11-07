@@ -7,7 +7,7 @@ from aim.utils import *
 
 PrefixIncludePath = functools.partial(prefix, "-I")
 PrefixLibraryPath = functools.partial(prefix, "-L")
-PrefixLibrary = functools.partial(prefix, "-l")
+PrefixLibrary = functools.partial(prefix, "-l:")
 ToObjectFiles = src_to_o
 
 
