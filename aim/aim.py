@@ -9,23 +9,34 @@ from schema import target_schema
 from utils import *
 
 
-def run_clean_process(globs: StringList, path: Optional[Path] = None):
-    path = Path().cwd() if path is None else Path(path)
-    for glob_str in globs:
-        for f in path.glob(glob_str):
-            print(f"rm {f.name}")
-            f.unlink()
+# def run_clean_process(globs: StringList, path: Optional[Path] = None):
+#     path = Path().cwd() if path is None else Path(path)
+#     for glob_str in globs:
+#         for f in path.glob(glob_str):
+#             print(f"rm {f.name}")
+#             f.unlink()
+#
+#
+# def find_build(build_name, builds):
+#     for build in builds:
+#         if build["name"] == build_name:
+#             return build
+#     else:
+#         raise RuntimeError(f"Failed to find build with name: {build_name}")
 
 
-def find_build(build_name, builds):
-    # TODO: handle build names that don't exist in the toml file.
-    # TODO: ensure build names are unique.
+def check_builds_names_are_unique(builds):
+    names = [build["name"] for build in builds]
+    seen = []
+    duplicates = []
+    for name in names:
+        if name not in seen:
+            seen.append(name)
+        else:
+            if name not in duplicates:
+                duplicates.append(name)
 
-    for build in builds:
-        if build["name"] == build_name:
-            return build
-    else:
-        raise RuntimeError(f"Failed to find build with name: {build_name}")
+    assert len(duplicates) == 0, f"The following build names have been duplicated: {duplicates}."
 
 
 def generate_build_rules(builder, project_dir, parsed_toml):
@@ -50,6 +61,8 @@ def parse_toml_file(parsed_toml, NinjaWriter, build_name: str, project_dir: Path
     #
     # # TODO: Should we always clean the project?
     # run_clean_process(["*.lib", "*.o", "*.obj", "*.pdb", "*.ilk", "*.exe"])
+
+    check_builds_names_are_unique(parsed_toml["builds"])
 
     compiler_c = parsed_toml["cxx"]
     compiler_cpp = parsed_toml["cc"]
@@ -80,7 +93,7 @@ def parse_toml_file(parsed_toml, NinjaWriter, build_name: str, project_dir: Path
     # for dependency in requires:
     #     dep_build = find_build(dependency, builds)
     #     run_ninja(dep_build)
-        # builder.build(dep_build)
+    # builder.build(dep_build)
 
     # run_ninja(the_build)
     # builder.build(the_build)
