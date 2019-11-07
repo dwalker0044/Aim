@@ -9,22 +9,6 @@ from aim.schema import target_schema
 from aim.utils import *
 
 
-# def run_clean_process(globs: StringList, path: Optional[Path] = None):
-#     path = Path().cwd() if path is None else Path(path)
-#     for glob_str in globs:
-#         for f in path.glob(glob_str):
-#             print(f"rm {f.name}")
-#             f.unlink()
-#
-#
-# def find_build(build_name, builds):
-#     for build in builds:
-#         if build["name"] == build_name:
-#             return build
-#     else:
-#         raise RuntimeError(f"Failed to find build with name: {build_name}")
-
-
 def generate_build_rules(builder, project_dir, parsed_toml):
     flags = getattr(parsed_toml, "flags", [])
     defines = getattr(parsed_toml, "defines", [])
@@ -41,13 +25,6 @@ def run_ninja(build_name):
 
 
 def parse_toml_file(parsed_toml, NinjaWriter, build_name: str, project_dir: Path):
-    # if build_name == "clean":
-    #     run_clean_process(["*.lib", "*.o", "*.obj", "*.pdb", "*.ilk", "*.exe"])
-    #     return
-    #
-    # # TODO: Should we always clean the project?
-    # run_clean_process(["*.lib", "*.o", "*.obj", "*.pdb", "*.ilk", "*.exe"])
-
     compiler_c = parsed_toml["cxx"]
     compiler_cpp = parsed_toml["cc"]
     archiver = parsed_toml["ar"]
@@ -60,9 +37,9 @@ def parse_toml_file(parsed_toml, NinjaWriter, build_name: str, project_dir: Path
                                         archiver)
     else:
         builder = gccbuilds.GCCBuilds(NinjaWriter,
-                                      compiler_cpp,
-                                      compiler_c,
-                                      archiver)
+                                          compiler_cpp,
+                                          compiler_c,
+                                          archiver)
 
     # Write all the build rules so the ninja file does not need to be rewritten each time.
     generate_build_rules(builder, project_dir, parsed_toml)

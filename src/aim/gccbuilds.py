@@ -31,6 +31,7 @@ class GCCBuilds:
             raise RuntimeError(f"Unknown build type {the_build}.")
 
     def build_static_library(self, build: Dict):
+        build_name = build["name"]
         cxxflags = build["flags"]
         defines = build["defines"]
         directory = build["directory"]
@@ -60,6 +61,11 @@ class GCCBuilds:
                        inputs=to_str(obj_files))
         self.nfw.newline()
 
+        self.nfw.build(rule="phony",
+                       inputs=library_name,
+                       outputs=build_name)
+        self.nfw.newline()
+
         print("Static library build information...")
         print(f"LIBNAME: {library_name}")
         print(f"CXXFLAGS: {cxxflags}")
@@ -69,6 +75,7 @@ class GCCBuilds:
         print("")
 
     def build_executable(self, build: Dict):
+        build_name = build["name"]
         exe_name = build["outputName"]
         cxxflags = build["flags"]
         defines = build["defines"]
@@ -107,6 +114,11 @@ class GCCBuilds:
                        implicit=libraries)
         self.nfw.newline()
 
+        self.nfw.build(rule="phony",
+                       inputs=exe_name,
+                       outputs=build_name)
+        self.nfw.newline()
+
         print("Building executable...")
         print(f"CXXFLAGS: {cxxflags}")
         print(f"DEFINES: {defines}")
@@ -116,6 +128,7 @@ class GCCBuilds:
         print("")
 
     def build_dynamic_library(self, build: Dict):
+        build_name = build["name"]
         lib_name = build["outputName"]
         cxxflags = build["flags"]
         defines = build["defines"]
@@ -151,6 +164,11 @@ class GCCBuilds:
                        inputs=to_str(src_files),
                        outputs=lib_name,
                        implicit=libraries)
+        self.nfw.newline()
+
+        self.nfw.build(rule="phony",
+                       inputs=lib_name,
+                       outputs=build_name)
         self.nfw.newline()
 
         print("Building dynamic library...")

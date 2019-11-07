@@ -18,4 +18,4 @@ requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
 [tool.poetry.scripts]
-aim = "aim.aim:entry"
+aim = "aim.main:entry"
