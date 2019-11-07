@@ -1,6 +1,20 @@
 import cerberus
 
 
+class UniqueNameChecker:
+    def __init__(self):
+        self.name_lookup = []
+
+    def check(self, field, value, error):
+        if value in self.name_lookup:
+            error(field, f"The name field must be unique. The name {value} has already been used.")
+        else:
+            self.name_lookup.append(value)
+
+
+unique_name_checker = UniqueNameChecker()
+
+
 def target_schema(document):
     schema = {
         "cxx": {"required": True, "type": "string"},
@@ -32,6 +46,7 @@ def target_schema(document):
                     "name": {
                         "required": True,
                         "type": "string",
+                        "check_with": unique_name_checker.check
                     },
 
                     "buildRule": {

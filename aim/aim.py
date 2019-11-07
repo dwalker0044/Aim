@@ -25,20 +25,6 @@ from utils import *
 #         raise RuntimeError(f"Failed to find build with name: {build_name}")
 
 
-def check_builds_names_are_unique(builds):
-    names = [build["name"] for build in builds]
-    seen = []
-    duplicates = []
-    for name in names:
-        if name not in seen:
-            seen.append(name)
-        else:
-            if name not in duplicates:
-                duplicates.append(name)
-
-    assert len(duplicates) == 0, f"The following build names have been duplicated: {duplicates}."
-
-
 def generate_build_rules(builder, project_dir, parsed_toml):
     flags = getattr(parsed_toml, "flags", [])
     defines = getattr(parsed_toml, "defines", [])
@@ -61,8 +47,6 @@ def parse_toml_file(parsed_toml, NinjaWriter, build_name: str, project_dir: Path
     #
     # # TODO: Should we always clean the project?
     # run_clean_process(["*.lib", "*.o", "*.obj", "*.pdb", "*.ilk", "*.exe"])
-
-    check_builds_names_are_unique(parsed_toml["builds"])
 
     compiler_c = parsed_toml["cxx"]
     compiler_cpp = parsed_toml["cc"]
