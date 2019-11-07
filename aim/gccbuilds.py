@@ -90,7 +90,10 @@ class GCCBuilds:
         libraries = getattr(build, "libraries", [])
         libraries = PrefixLibrary(libraries)
 
-        linker_args = library_paths + libraries
+        third_libraries = getattr(build, "thirdPartyLibraries", [])
+        third_libraries = PrefixLibrary(third_libraries)
+
+        linker_args = library_paths + libraries + third_libraries
 
         self.builder.add_exe(exe_name,
                              defines,
@@ -123,7 +126,6 @@ class GCCBuilds:
         src_files = flatten(glob("*.cpp", src_paths))
         assert src_files, "Fail to find any source files."
 
-        # TODO: remember some of the things are optional.
         includes = getattr(build, "includePaths", [])
         include_paths = append_paths(directory, includes)
         includes = PrefixIncludePath(include_paths)
@@ -135,7 +137,10 @@ class GCCBuilds:
         libraries = getattr(build, "libraries", [])
         libraries = PrefixLibrary(libraries)
 
-        linker_args = library_paths + libraries
+        third_libraries = getattr(build, "thirdPartyLibraries", [])
+        third_libraries = PrefixLibrary(third_libraries)
+
+        linker_args = library_paths + libraries + third_libraries
 
         self.builder.add_shared(lib_name,
                                 defines,

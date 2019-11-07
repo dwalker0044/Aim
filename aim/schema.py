@@ -2,8 +2,6 @@ import cerberus
 
 
 def target_schema(document):
-    # TODO add empty: False
-
     schema = {
         "cxx": {"required": True, "type": "string"},
         "cc": {"required": True, "type": "string"},
@@ -47,24 +45,22 @@ def target_schema(document):
                         "type": "string"
                     },
 
-                    "requires": {
-                        "type": "list",
-                        "schema": {"type": "string"}
-                    },
-
                     "srcDirs": {
                         "required": True,
+                        "empty": False,
                         "type": "list",
                         "schema": {"type": "string"}
                     },
 
                     "includePaths": {
                         "type": "list",
+                        "empty": False,
                         "schema": {"type": "string"}
                     },
 
                     "libraryPaths": {
                         "type": "list",
+                        "empty": False,
                         "schema": {"type": "string"},
                         "dependencies": {
                             "buildRule": ["exe", "dynamiclib"]
@@ -73,6 +69,16 @@ def target_schema(document):
 
                     "libraries": {
                         "type": "list",
+                        "empty": False,
+                        "schema": {"type": "string"},
+                        "dependencies": {
+                            "buildRule": ["exe", "dynamiclib"]
+                        }
+                    },
+
+                    "thirdPartyLibraries": {
+                        "type": "list",
+                        "empty": False,
                         "schema": {"type": "string"},
                         "dependencies": {
                             "buildRule": ["exe", "dynamiclib"]

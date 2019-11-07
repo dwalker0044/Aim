@@ -115,7 +115,10 @@ class MSVCBuilds:
         implicits = implicit_library_inputs(libraries)
         link_libraries = PrefixLibrary(convert_dlls_to_lib(libraries))
 
-        linker_args = library_paths + link_libraries
+        third_libraries = getattr(build, "thirdPartyLibraries", [])
+        third_libraries = PrefixLibrary(convert_dlls_to_lib(third_libraries))
+
+        linker_args = library_paths + link_libraries + third_libraries
 
         builder = WindowsBuildRules(self.nfw, self.cxx_compiler)
         builder.add_exe(exe_name,
@@ -161,7 +164,10 @@ class MSVCBuilds:
         implicits = implicit_library_inputs(libraries)
         link_libraries = PrefixLibrary(convert_dlls_to_lib(libraries))
 
-        linker_args = library_paths + link_libraries
+        third_libraries = getattr(build, "thirdPartyLibraries", [])
+        third_libraries = PrefixLibrary(convert_dlls_to_lib(third_libraries))
+
+        linker_args = library_paths + link_libraries + third_libraries
 
         builder = WindowsBuildRules(self.nfw, self.cxx_compiler)
         builder.add_shared(lib_name,
