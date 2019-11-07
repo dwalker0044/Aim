@@ -1,4 +1,5 @@
 import argparse
+import subprocess
 
 import toml
 from ninja_syntax import Writer
@@ -20,11 +21,25 @@ def generate_build_rules(builder, project_dir, parsed_toml):
         builder.build(build_info)
 
 
-def run_ninja(build_name):
-    pass
+def find_build(build_name, builds):
+    for build in builds:
+        if build["name"] == build_name:
+            return build
+    else:
+        raise RuntimeError(f"Failed to find build with name: {build_name}")
 
 
-def parse_toml_file(parsed_toml, NinjaWriter, build_name: str, project_dir: Path):
+def run_ninja(working_dir, build_name):
+    command = ["ninja", build_name]
+    print(" ".join(command) + " ...")
+    result = subprocess.run(command, cwd=str(working_dir), capture_output=True)
+    if result.stdout:
+        print(result.stdout.decode("utf-8"))
+    if result.stderr:
+        print(result.stderr.decode("utf-8"))
+
+
+def parse_toml_file(parsed_toml, NinjaWriter, project_dir: Path):
     compiler_c = parsed_toml["cxx"]
     compiler_cpp = parsed_toml["cc"]
     archiver = parsed_toml["ar"]
@@ -37,37 +52,22 @@ def parse_toml_file(parsed_toml, NinjaWriter, build_name: str, project_dir: Path
                                         archiver)
     else:
         builder = gccbuilds.GCCBuilds(NinjaWriter,
-                                          compiler_cpp,
-                                          compiler_c,
-                                          archiver)
+                                      compiler_cpp,
+                                      compiler_c,
+                                      archiver)
 
-    # Write all the build rules so the ninja file does not need to be rewritten each time.
     generate_build_rules(builder, project_dir, parsed_toml)
-
-    # builds = parsed_toml["builds"]
-    # the_build = find_build(build_name, builds)
-
-    # Remember, dependencies are build in the order specified. Might need to
-    # update this in the future if we ever to more complex dependency resolution.
-    # requires = the_build["requires"]
-
-    # for dependency in requires:
-    #     dep_build = find_build(dependency, builds)
-    #     run_ninja(dep_build)
-    # builder.build(dep_build)
-
-    # run_ninja(the_build)
-    # builder.build(the_build)
 
 
 def entry():
     parser = argparse.ArgumentParser(description='Aim C++ build tool.')
     parser.add_argument('--build',
                         type=str,
-                        help='The build type: staticlib, dynamiclib or exe')
+                        required=True,
+                        help='The build name')
     parser.add_argument('--path',
                         type=str,
-                        help='sum the integers (default: find the max)')
+                        help='Path to target directory')
 
     args = parser.parse_args()
     print(args)
@@ -77,18 +77,24 @@ def entry():
         project_dir = project_dir / Path(args.path)
 
     ninja_path = project_dir / "build.ninja"
-
     toml_path = project_dir / "target.toml"
+
     with toml_path.open("r") as toml_file:
+        parsed_toml = toml.loads(toml_file.read())
+
+        # Check that the build exists before doing any work.
+        builds = parsed_toml["builds"]
+        the_build = find_build(args.build, builds)
+
         with ninja_path.open("w+") as ninja_file:
             ninja_writer = Writer(ninja_file)
 
-            parsed_toml = toml.loads(toml_file.read())
             target_schema(parsed_toml)
             parse_toml_file(parsed_toml,
                             ninja_writer,
-                            args.build,
                             project_dir)
+
+        run_ninja(project_dir, the_build["name"])
 
 
 if __name__ == '__main__':
