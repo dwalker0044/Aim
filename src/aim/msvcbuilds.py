@@ -2,8 +2,8 @@ import functools
 
 from ninja_syntax import Writer
 
-from msvcbuildrules import WindowsBuildRules
-from utils import *
+from aim.msvcbuildrules import WindowsBuildRules
+from aim.utils import *
 
 PrefixIncludePath = functools.partial(prefix, "/I")
 PrefixLibraryPath = functools.partial(prefix, "/LIBPATH:")

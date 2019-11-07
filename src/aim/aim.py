@@ -3,10 +3,10 @@ import argparse
 import toml
 from ninja_syntax import Writer
 
-import gccbuilds
-import msvcbuilds
-from schema import target_schema
-from utils import *
+from aim import gccbuilds
+from aim import msvcbuilds
+from aim.schema import target_schema
+from aim.utils import *
 
 
 # def run_clean_process(globs: StringList, path: Optional[Path] = None):
@@ -83,7 +83,7 @@ def parse_toml_file(parsed_toml, NinjaWriter, build_name: str, project_dir: Path
     # builder.build(the_build)
 
 
-def execute():
+def entry():
     parser = argparse.ArgumentParser(description='Aim C++ build tool.')
     parser.add_argument('--build',
                         type=str,
@@ -95,7 +95,10 @@ def execute():
     args = parser.parse_args()
     print(args)
 
-    project_dir = Path().cwd() / Path(args.path)
+    project_dir = Path().cwd()
+    if args.path:
+        project_dir = project_dir / Path(args.path)
+
     ninja_path = project_dir / "build.ninja"
 
     toml_path = project_dir / "target.toml"
@@ -112,4 +115,4 @@ def execute():
 
 
 if __name__ == '__main__':
-    execute()
+    entry()

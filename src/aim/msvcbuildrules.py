@@ -1,9 +1,9 @@
 from ninja_syntax import Writer
 
-from typedefs import StringList
+from aim.typedefs import StringList
 
 
-class GCCBuildRules:
+class WindowsBuildRules:
     def __init__(self, nfw: Writer, compiler: str):
         self.nfw = nfw
         self.compiler = compiler
@@ -16,11 +16,10 @@ class GCCBuildRules:
         defines = " ".join(defines)
         includes = " ".join(includes)
 
-        command = f"{self.compiler} {flags} -MMD -MF deps.d -c {defines} {includes} $in"
+        command = f"{self.compiler} {defines} {includes} /showIncludes {flags} -c $in"
         self.nfw.rule(name="compile",
-                      description='Compiles source files into object files',
-                      deps="gcc",
-                      depfile="deps.d",
+                      description='Compile source files to object files',
+                      deps="msvc",
                       command=command)
         self.nfw.newline()
 
@@ -41,9 +40,9 @@ class GCCBuildRules:
         includes = " ".join(includes)
         linker_args = " ".join(linker_args)
 
-        command = f"{self.compiler} {defines} {flags} {includes} $in -o {exe_name} {linker_args}"
+        command = f"{self.compiler} {defines} {flags} {includes} $in /link /out:{exe_name} {linker_args}"
         self.nfw.rule(name="exe",
-                      description="Builds an executable.",
+                      description="Build an executable.",
                       command=command)
         self.nfw.newline()
 
@@ -58,8 +57,8 @@ class GCCBuildRules:
         includes = " ".join(includes)
         linker_args = " ".join(linker_args)
 
-        command = f"{self.compiler} {defines} -fPIC -shared -fvisibility=hidden {flags} {includes} $in -o {lib_name} {linker_args}"
+        command = f"{self.compiler} {defines} {flags} {includes} $in /link /DLL /out:{lib_name} {linker_args}"
         self.nfw.rule(name="shared",
-                      description="Builds a shared library.",
+                      description="Build an shared library.",
                       command=command)
         self.nfw.newline()

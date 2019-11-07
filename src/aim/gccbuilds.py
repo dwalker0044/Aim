@@ -2,8 +2,8 @@ import functools
 
 from ninja_syntax import Writer
 
-from gccbuildrules import GCCBuildRules
-from utils import *
+from aim.gccbuildrules import GCCBuildRules
+from aim.utils import *
 
 PrefixIncludePath = functools.partial(prefix, "-I")
 PrefixLibraryPath = functools.partial(prefix, "-L")

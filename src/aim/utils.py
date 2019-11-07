@@ -2,9 +2,7 @@ import itertools
 from pathlib import Path
 from typing import *
 
-from typedefs import PathList, StringList
-
-T = TypeVar("T")
+from aim.typedefs import PathList, StringList, T
 
 
 def src_to_obj(files) -> StringList:
