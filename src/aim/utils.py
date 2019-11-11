@@ -37,7 +37,7 @@ def suffix(the_suffix, paths) -> StringList:
     return [str(x) + the_suffix for x in paths]
 
 
-def append_paths(base_path: Path, other_paths: PathList):
+def append_paths(base_path: Path, other_paths: Union[PathList, StringList]):
     return resolve([base_path / the_path for the_path in other_paths])
 
 

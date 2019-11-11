@@ -11,8 +11,8 @@ from aim.utils import *
 
 
 def generate_build_rules(builder, project_dir, parsed_toml):
-    flags = getattr(parsed_toml, "flags", [])
-    defines = getattr(parsed_toml, "defines", [])
+    flags = parsed_toml.get("flags", [])
+    defines = parsed_toml.get("defines", [])
     builds = parsed_toml["builds"]
     for build_info in builds:
         build_info["directory"] = project_dir
@@ -40,20 +40,18 @@ def run_ninja(working_dir, build_name):
         print(result.stderr.decode("utf-8"))
 
 
-def parse_toml_file(parsed_toml, NinjaWriter, project_dir: Path):
+def parse_toml_file(parsed_toml, project_dir: Path):
     compiler_c = parsed_toml["cc"]
     compiler_cpp = parsed_toml["cxx"]
     archiver = parsed_toml["ar"]
     frontend = parsed_toml["compilerFrontend"]
 
     if frontend == "msvc":
-        builder = msvcbuilds.MSVCBuilds(NinjaWriter,
-                                        compiler_cpp,
+        builder = msvcbuilds.MSVCBuilds(compiler_cpp,
                                         compiler_c,
                                         archiver)
     else:
-        builder = gccbuilds.GCCBuilds(NinjaWriter,
-                                      compiler_cpp,
+        builder = gccbuilds.GCCBuilds(compiler_cpp,
                                       compiler_c,
                                       archiver)
 
@@ -81,7 +79,7 @@ def entry():
         else:
             project_dir = project_dir / Path(target_path)
 
-    ninja_path = project_dir / "build.ninja"
+    # ninja_path = project_dir / "build.ninja"
     toml_path = project_dir / "target.toml"
 
     with toml_path.open("r") as toml_file:
@@ -91,13 +89,12 @@ def entry():
         builds = parsed_toml["builds"]
         the_build = find_build(args.build, builds)
 
-        with ninja_path.open("w+") as ninja_file:
-            ninja_writer = Writer(ninja_file)
+        # with ninja_path.open("w+") as ninja_file:
+        #     ninja_writer = Writer(ninja_file)
 
-            target_schema(parsed_toml)
-            parse_toml_file(parsed_toml,
-                            ninja_writer,
-                            project_dir)
+        target_schema(parsed_toml)
+        parse_toml_file(parsed_toml,
+                        project_dir)
 
         run_ninja(project_dir, the_build["name"])
 

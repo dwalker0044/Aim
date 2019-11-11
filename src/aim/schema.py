@@ -49,6 +49,12 @@ def target_schema(document):
                         "check_with": unique_name_checker.check
                     },
 
+                    "requires": {
+                        "type": "list",
+                        "empty": False,
+                        "schema": {"type": "string"},
+                    },
+
                     "buildRule": {
                         "required": True,
                         "type": "string",

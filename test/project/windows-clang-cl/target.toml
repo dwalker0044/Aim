@@ -11,24 +11,25 @@ flags = [
 defines = []
 
 [[builds]]
-    name = "windowsstatic"
+    name = "static"
     buildRule = "staticlib"
     outputName = "libWindowsProject.lib"
-    srcDirs = ["../libProject"]
-    includePaths = ["../libProject"]
+    srcDirs = ["../libproject"]
+    includePaths = ["../libproject"]
 
 [[builds]]
-    name = "windowsshared"
+    name = "shared"
     buildRule = "dynamiclib"
     outputName = "windowsshared.dll"
-    srcDirs = ["../libProject"]
-    includePaths = ["../libProject"]
+    srcDirs = ["../libproject"]
+    includePaths = ["../libproject"]
 
 [[builds]]
-    name = "windowsexe"
+    name = "exe"
+    requires= ["shared"]
     buildRule = "exe"
     outputName = "windowsproject.exe"
     srcDirs = ["../app"]
-    includePaths = ["../libProject"]
+    includePaths = ["../libproject"]
     libraryPaths = ["./"]
     libraries = ["windowsshared.dll"]

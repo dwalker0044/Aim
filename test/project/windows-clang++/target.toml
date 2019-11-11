@@ -12,23 +12,22 @@ defines = []
 [[builds]]
     name = "static"
     buildRule = "staticlib"
-    requires = []
     outputName = "libWindowsProject.lib"
-    srcDirs = ["../libProject"]
+    srcDirs = ["../libproject"]
     includePaths = ["../libProject"]
 
 [[builds]]
     name = "shared"
     buildRule = "dynamiclib"
-    requires = []
-    outputName = "sharedWindowsProject.dll"
-    srcDirs = ["../libProject"]
-    includePaths = ["../libProject"]
+    outputName = "libProject.so"
+    srcDirs = ["../libproject"]
+    includePaths = ["../libproject"]
 
 [[builds]]
     name = "exe"
     buildRule = "exe"
-    requires = []
     outputName = "project.exe"
-    srcDirs = ["../app", "../libProject"]
+    srcDirs = ["../app", "../libproject"]
     includePaths = ["../libProject"]
+    libraryPaths = ["./"]
+    libraries = ["libProject.so"]
