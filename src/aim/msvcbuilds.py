@@ -94,9 +94,6 @@ class MSVCBuilds:
         self.c_compiler = c_compiler
         self.archiver = archiver
 
-        self.src_file_cache = []
-        self.obj_files = []
-
     def add_rules(self, build):
         directory = build["directory"]
         ninja_path = directory / "rules.ninja"
@@ -148,10 +145,10 @@ class MSVCBuilds:
         # Without the absolute path to the obj files, it would build the files again
         # in the current (exe's) build location.
         build_path = build["buildPath"]
-        self.obj_files = ToObjectFiles(src_files)
-        self.obj_files = append_paths(build_path, self.obj_files)
+        obj_files = ToObjectFiles(src_files)
+        obj_files = append_paths(build_path, obj_files)
 
-        file_pairs = zip(to_str(src_files), to_str(self.obj_files))
+        file_pairs = zip(to_str(src_files), to_str(obj_files))
         for src_file, obj_file in file_pairs:
             nfw.build(outputs=obj_file,
                       rule="compile",
@@ -164,15 +161,17 @@ class MSVCBuilds:
                       })
             nfw.newline()
 
+        return obj_files
+
     def build_static_library(self, nfw: Writer, build: Dict):
         build_name = build["name"]
         library_name = build["outputName"]
 
-        self.add_compile_rule(nfw, build)
+        obj_files = self.add_compile_rule(nfw, build)
 
         nfw.build(outputs=library_name,
                   rule="ar",
-                  inputs=to_str(self.obj_files))
+                  inputs=to_str(obj_files))
         nfw.newline()
 
         nfw.build(rule="phony",
@@ -201,11 +200,11 @@ class MSVCBuilds:
             nfw.subninja(escape_path(str(ninja_file)))
             nfw.newline()
 
-        self.add_compile_rule(nfw, build)
+        obj_files = self.add_compile_rule(nfw, build)
 
         nfw.build(outputs=exe_name,
                   rule="exe",
-                  inputs=to_str(self.obj_files),
+                  inputs=to_str(obj_files),
                   implicit=implicits,
                   variables={
                       "compiler": self.cxx_compiler,
@@ -236,10 +235,10 @@ class MSVCBuilds:
         linker_args = library_paths + link_libraries + third_libraries
         implicit_outputs = implicit_library_outputs([lib_name])
 
-        self.add_compile_rule(nfw, build)
+        obj_files = self.add_compile_rule(nfw, build)
 
         nfw.build(rule="shared",
-                  inputs=to_str(self.obj_files),
+                  inputs=to_str(obj_files),
                   outputs=lib_name,
                   implicit=implicits,
                   implicit_outputs=implicit_outputs,
