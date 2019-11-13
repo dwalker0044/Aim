@@ -2,7 +2,6 @@ import argparse
 import subprocess
 
 import toml
-from ninja_syntax import Writer
 
 from aim import gccbuilds
 from aim import msvcbuilds
@@ -30,7 +29,7 @@ def find_build(build_name, builds):
 
 
 def run_ninja(working_dir, build_name):
-    command = ["ninja", build_name]
+    command = ["ninja", f"-C{build_name}", build_name]
     command_str = " ".join(command)
     print(f"Executing \"{command_str}\"")
     result = subprocess.run(command, cwd=str(working_dir), capture_output=True)

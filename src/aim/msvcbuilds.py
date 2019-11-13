@@ -11,6 +11,7 @@ PrefixLibrary = functools.partial(prefix, "")
 ToObjectFiles = src_to_obj
 
 
+# TODO DUPLICATION - refactor this somewhere useful.
 def escape_path(word):
     return word.replace('$ ', '$$ ').replace(' ', '$ ').replace(':', '$:')
 
