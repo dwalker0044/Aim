@@ -135,6 +135,4 @@ dmypy.json
 *.exe
 .ninja_deps
 .ninja_log
-build.ninja
-
-/test/project/windows-clang++/rules.ninja
+*.ninja
