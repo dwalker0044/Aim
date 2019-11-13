@@ -31,5 +31,6 @@ defines = []
     outputName = "windowsproject.exe"
     srcDirs = ["../app"]
     includePaths = ["../libproject"]
+    # Note exe shouldn't build because library path is wrong.
     libraryPaths = ["./"]
     libraries = ["windowsshared.dll"]

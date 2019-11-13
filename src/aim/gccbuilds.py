@@ -51,8 +51,7 @@ def get_third_party_library_information(build):
 
 
 class GCCBuilds:
-    def __init__(self, nfw: Writer, cxx_compiler, c_compiler, archiver):
-        self.nfw = nfw
+    def __init__(self, cxx_compiler, c_compiler, archiver):
         self.cxx_compiler = cxx_compiler
         self.c_compiler = c_compiler
         self.archiver = archiver
@@ -168,6 +167,7 @@ class GCCBuilds:
         nfw.build(outputs=exe_name,
                   rule="exe",
                   inputs=to_str(obj_files),
+                  implicit=libraries,
                   variables={
                       "compiler": self.cxx_compiler,
                       "includes": includes,
@@ -200,6 +200,7 @@ class GCCBuilds:
 
         nfw.build(rule="shared",
                   inputs=to_str(obj_files),
+                  implicit=libraries,
                   outputs=lib_name,
                   variables={
                       "compiler": self.cxx_compiler,

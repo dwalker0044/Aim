@@ -12,9 +12,9 @@ defines = []
 [[builds]]
     name = "static"
     buildRule = "staticlib"
-    outputName = "libWindowsProject.lib"
+    outputName = "project.lib"
     srcDirs = ["../libproject"]
-    includePaths = ["../libProject"]
+    includePaths = ["../libproject"]
 
 [[builds]]
     name = "shared"
@@ -25,9 +25,10 @@ defines = []
 
 [[builds]]
     name = "exe"
+    requires = ["shared"]
     buildRule = "exe"
     outputName = "project.exe"
     srcDirs = ["../app", "../libproject"]
-    includePaths = ["../libProject"]
-    libraryPaths = ["./"]
+    includePaths = ["../libproject"]
+    libraryPaths = ["./exe"]
     libraries = ["libProject.so"]

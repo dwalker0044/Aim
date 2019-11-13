@@ -137,3 +137,4 @@ dmypy.json
 .ninja_log
 build.ninja
 
+/test/project/windows-clang++/rules.ninja

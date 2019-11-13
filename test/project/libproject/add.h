@@ -3,7 +3,11 @@
 
 #ifdef SHARED_EXPORT
 #else
-#define SHARED_EXPORT __declspec(dllimport)
+    #if _WIN32 || _WIN64
+        #define SHARED_EXPORT __declspec(dllimport)
+    #else
+        #define SHARED_EXPORT
+    #endif
 #endif
 
 SHARED_EXPORT
