@@ -33,6 +33,10 @@ def prefix(the_prefix, paths) -> StringList:
     return [the_prefix + str(x) for x in paths]
 
 
+def add_quotes(paths: Union[PathList, StringList]):
+    return [f"\"{str(x)}\"" for x in paths]
+
+
 def suffix(the_suffix, paths) -> StringList:
     return [str(x) + the_suffix for x in paths]
 

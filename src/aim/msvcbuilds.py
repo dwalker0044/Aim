@@ -55,7 +55,7 @@ def get_src_files(build):
     directory = build["directory"]
     src_dirs = build["srcDirs"]
     src_paths = append_paths(directory, src_dirs)
-    src_files = flatten(glob("*.cpp", src_paths))
+    src_files = flatten(glob("*.cpp", src_paths)) + flatten(glob("*.c", src_paths))
     assert src_files, "Fail to find any source files."
     return src_files
 
@@ -64,7 +64,7 @@ def get_include_paths(build):
     directory = build["directory"]
     include_paths = build.get("includePaths", [])
     includes = append_paths(directory, include_paths)
-    includes = PrefixIncludePath(includes)
+    includes = PrefixIncludePath(add_quotes(includes))
     return includes
 
 
@@ -72,7 +72,7 @@ def get_library_paths(build):
     directory = build["directory"]
     library_paths = build.get("libraryPaths", [])
     library_paths = append_paths(directory, library_paths)
-    library_paths = PrefixLibraryPath(library_paths)
+    library_paths = PrefixLibraryPath(add_quotes(library_paths))
     return library_paths
 
 
