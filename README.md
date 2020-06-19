@@ -20,28 +20,33 @@ All you have to do is write the target file in TOML. It is stupidly easy. No wei
 use nowhere else.
 
 ## Getting Started
-Aim is a python project. It uses (poetry)[https://python-poetry.org/] for the project and dependency manager.
+Aim is a python project. It uses [poetry](https://python-poetry.org/) for the project and dependency manager.
 Installation must be done using `poetry`.
 
 ### Prerequisites
 * Python 3.7 or above.
-* (poetry)[https://python-poetry.org/]
+* [poetry](https://python-poetry.org/)
 
 ### Installing
 Clone the project.
 
-Then install Aim using Poetry:
+Then install Aim using Poetry
+
 `poetry install`
 
 Check aim has been installed:
+
 `aim --help`
 
 ### Using
 Create a folder for your project `AimDemoProject` and `cd` into it.
 
 Now initialise the directory:
-* `aim init`
+
+`aim init`
+
 The following output will be displayed:
+
 ```
 Creating directories...
 	/home/username/AimDemoProject/headers
@@ -60,11 +65,11 @@ Creating common build targets...
 ```
 
 Aim has created some folders for you. Don't feel like you have to use this structure.
-The important directory is the `build` directory. Aim has assumed that you want to target Windows and Linux
-and that you'll need a debug and release build for each. Each target is made up of the the platform (Linux/Window),
+The important directory is the `build` directory. Aim has assumed that you want to target `Windows` and `Linux`
+and that you'll need a `debug` and `release` build for each. Each target is made up of the the platform (Linux/Window),
 the compiler (linux-clang++/clang_cl) and the build mode (debug/release). Each target has it's own `target.toml` file.
 
-Let's take a look at the `linux-clang++-debug/target.toml` file:#
+Let's take a look at the `linux-clang++-debug/target.toml` file:
 
 ```toml
 cxx = "clang++"                       # the cxx compiler to use.
@@ -109,9 +114,12 @@ defines = []                          # defines passed to all build targets.
 For the complete set of options, please refer to `src/aim/schema.py`.
 
 Add some files and then build the project:
+
 `aim build --target exe --path builds/linux-clang++-debug/`
 
 Where `exe` could be replaced with `static` or `shared` depending on what you want to build!
+
+Note, It will be simpler when getting started, to remove from the `exe` build the `requires`, `libraryPaths` and `libraries` fields.
 
 ### Other remarks
 The target file can be extended with other builds. For example to add unit tests, partition any code that needs to be
