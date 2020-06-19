@@ -47,3 +47,7 @@ def append_paths(base_path: Path, other_paths: Union[PathList, StringList]):
 
 def resolve(paths: PathList):
     return [path.resolve() for path in paths]
+
+
+def escape_path(word):
+    return word.replace('$ ', '$$ ').replace(' ', '$ ').replace(':', '$:')

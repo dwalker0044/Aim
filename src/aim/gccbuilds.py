@@ -1,5 +1,7 @@
 import functools
 
+from ninja_syntax import Writer
+
 from aim.gccbuildrules import *
 from aim.utils import *
 
@@ -7,10 +9,6 @@ PrefixIncludePath = functools.partial(prefix, "-I")
 PrefixLibraryPath = functools.partial(prefix, "-L")
 PrefixLibrary = functools.partial(prefix, "-l:")
 ToObjectFiles = src_to_o
-
-
-def escape_path(word):
-    return word.replace('$ ', '$$ ').replace(' ', '$ ').replace(':', '$:')
 
 
 def get_src_files(build):
