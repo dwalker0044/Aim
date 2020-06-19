@@ -59,12 +59,11 @@ def parse_toml_file(parsed_toml, project_dir: Path):
 
 
 def entry():
+    # TODO: Get version automatically from the pyproject.toml file.
     parser = argparse.ArgumentParser(description="Aim C++ build tool. For more help run aim <command> --help")
-    parser.add_argument("-v", "--version", action="version", version="0.1.2")
+    parser.add_argument("-v", "--version", action="version", version="0.1.3")
     sub_parser = parser.add_subparsers(dest="command", help="Commands")
-
-    init_parser = sub_parser.add_parser("init",
-                                        help="Initialise the current directory")
+    init_parser = sub_parser.add_parser("init", help="Initialise the current directory")
 
     build_parser = sub_parser.add_parser("build", help="The build name")
     build_parser.add_argument('--target',
