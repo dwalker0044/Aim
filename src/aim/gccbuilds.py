@@ -118,7 +118,7 @@ class GCCBuilds:
                       variables={
                           "compiler": self.cxx_compiler,
                           "includes": includes,
-                          "cxxflags": cxxflags,
+                          "flags": cxxflags,
                           "defines": defines
                       })
             nfw.newline()
@@ -171,7 +171,7 @@ class GCCBuilds:
                   variables={
                       "compiler": self.cxx_compiler,
                       "includes": includes,
-                      "cxxflags": cxxflags,
+                      "flags": cxxflags,
                       "defines": defines,
                       "exe_name": exe_name,
                       "linker_args": " ".join(linker_args)
