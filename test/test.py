@@ -7,7 +7,7 @@ unknown = ""
 cxx = "clang-cl"
 cc = "clang-cl"
 ar = "llvm-ar"
-compilerFrontend="msvc"
+compilerFrontend="xyz"
 
 flags = [
     "/std:c++17",
@@ -39,7 +39,6 @@ defines = []
         "../../include",
         "../../../../3rdParty/eigen-eigen-323c052e1731",
     ]
-    libraryPaths = []
     libraries = []
 
 [[builds]]
@@ -57,7 +56,7 @@ defines = []
     libraries = ["ParameterEstimation.lib"]
 
 [[builds]]
-    name = "test"
+    name = "demo"
     buildRule = "exe"
     requires = ["parameterestimation"]
     outputName = "Tests.exe"

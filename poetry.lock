@@ -1,0 +1,42 @@
+[[package]]
+category = "main"
+description = "Lightweight, extensible schema and data validation tool for Python dictionaries."
+name = "cerberus"
+optional = false
+python-versions = ">=2.7"
+version = "1.3.2"
+
+[package.dependencies]
+setuptools = "*"
+
+[[package]]
+category = "main"
+description = "Python module for generating .ninja files."
+name = "ninja-syntax"
+optional = false
+python-versions = "*"
+version = "1.7.2"
+
+[[package]]
+category = "main"
+description = "Python Library for Tom's Obvious, Minimal Language"
+name = "toml"
+optional = false
+python-versions = "*"
+version = "0.10.1"
+
+[metadata]
+content-hash = "64c85b3f86f1fcb5935a34f82b65b5ff90ddf886286f289e7ce4f9f81c2cbb3d"
+python-versions = "^3.7"
+
+[metadata.files]
+cerberus = [
+    {file = "Cerberus-1.3.2.tar.gz", hash = "sha256:302e6694f206dd85cb63f13fd5025b31ab6d38c99c50c6d769f8fa0b0f299589"},
+]
+ninja-syntax = [
+    {file = "ninja_syntax-1.7.2.tar.gz", hash = "sha256:342dc97b9e88a6495bae22953ee6063f91d2f03db6f727b62ba5c3092a18ef1f"},
+]
+toml = [
+    {file = "toml-0.10.1-py2.py3-none-any.whl", hash = "sha256:bda89d5935c2eac546d648028b9901107a595863cb36bae0c73ac804a9b4ce88"},
+    {file = "toml-0.10.1.tar.gz", hash = "sha256:926b612be1e5ce0634a2ca03470f95169cf16f939018233a670519cb4ac58b0f"},
+]
