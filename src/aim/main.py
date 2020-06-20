@@ -127,7 +127,7 @@ defines = []
 LinuxDefaultTomlFile = """\
 cxx = "clang++"
 cc = "clang"
-ar = "llvm-ar"
+ar = "ar"
 compilerFrontend="gcc"
 
 flags = [
@@ -137,30 +137,29 @@ flags = [
 
 defines = []
 
+[[builds]]
+    name = "lib_calculator"
+    buildRule = "staticlib"
+    outputName = "libCalculator.a"
+    srcDirs = ["../../lib"]
+    includePaths = ["../../include"]
+
 #[[builds]]
-#    name = "static"
-#    buildRule = "staticlib"
-#    outputName = "libraryName.a"
+#    name = "lib_calculator_so"
+#    buildRule = "dynamiclib"
+#    outputName = "libCalculator.so"
 #    srcDirs = ["../../lib"]
 #    includePaths = ["../../include"]
 
 [[builds]]
-    name = "calculator"
-    buildRule = "dynamiclib"
-    outputName = "libCalculator.so"
-    srcDirs = ["../../lib"]
-    includePaths = ["../../include"]
-    # libraryPaths = []
-    # libraries = []
-[[builds]]
     name = "exe"
     buildRule = "exe"
-    requires = ["calculator"]
+    requires = ["lib_calculator"]
     outputName = "the_calculator.exe"
     srcDirs = ["../../src"]
     includePaths = ["../../include"]
-    libraryPaths = ["./calculator"]
-    libraries = ["libCalculator.so"]
+    libraryPaths = ["./lib_calculator"]
+    libraries = ["libCalculator.a"]
 """
 
 CALCULATOR_CPP = """\

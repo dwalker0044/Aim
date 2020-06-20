@@ -1,7 +1,5 @@
 import functools
 
-from ninja_syntax import Writer
-
 from aim.gccbuildrules import *
 from aim.utils import *
 
@@ -128,15 +126,20 @@ class GCCBuilds:
         library_name = build["outputName"]
 
         obj_files = self.add_compile_rule(nfw, build)
+        build_path = build["buildPath"]
+        output_name = str(build_path / library_name)
 
-        nfw.build(outputs=library_name,
-                  rule="ar",
-                  inputs=to_str(obj_files))
+        nfw.build(outputs=output_name,
+                  rule="archive",
+                  inputs=to_str(obj_files),
+                  variables ={
+                      "archiver": self.archiver
+                  })
         nfw.newline()
 
         nfw.build(rule="phony",
-                  inputs=library_name,
-                  outputs=build_name)
+                  inputs=output_name,
+                  outputs=library_name)
         nfw.newline()
 
     def build_executable(self, nfw, build: Dict):

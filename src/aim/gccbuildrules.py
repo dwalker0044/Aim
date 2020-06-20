@@ -12,13 +12,14 @@ def add_compile(nfw: Writer):
 
 
 def add_ar(nfw: Writer):
-    nfw.rule(name="ar",
+    nfw.rule(name="archive",
              description='Combine object files into an archive',
-             command="llvm-ar cr $out $in")
+             command="$archiver cr $out $in")
     nfw.newline()
 
 
 def add_exe(nfw: Writer):
+    # TODO: origin should only really be added when we need to link against an so.
     command = f"$compiler $defines $flags $includes $in -o $exe_name -Wl,-rpath='$$ORIGIN' $linker_args"
     nfw.rule(name="exe",
              description="Builds an executable.",
