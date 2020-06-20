@@ -61,7 +61,7 @@ def parse_toml_file(parsed_toml, project_dir: Path):
 def entry():
     # TODO: Get version automatically from the pyproject.toml file.
     parser = argparse.ArgumentParser(description="Aim C++ build tool. For more help run aim <command> --help")
-    parser.add_argument("-v", "--version", action="version", version="0.1.3")
+    parser.add_argument("-v", "--version", action="version", version="0.1.4")
     sub_parser = parser.add_subparsers(dest="command", help="Commands")
     init_parser = sub_parser.add_parser("init", help="Initialise the current directory")
 
@@ -99,19 +99,19 @@ flags = [
 
 defines = []
 
-[[builds]]
-    name = "static"
-    buildRule = "staticlib"
-    outputName = "libraryName.lib"
-    srcDirs = ["../lib"]
-    includePaths = ["../headers"]
+#[[builds]]
+#    name = "static"
+#    buildRule = "staticlib"
+#    outputName = "libraryName.lib"
+#    srcDirs = ["../lib"]
+#    includePaths = ["../include"]
 
 [[builds]]
     name = "shared"
     buildRule = "dynamiclib"
     outputName = "libraryName.dll"
     srcDirs = ["../lib"]
-    includePaths = ["../headers"]
+    includePaths = ["../include"]
 
 [[builds]]
     name = "exe"
@@ -137,39 +137,71 @@ flags = [
 
 defines = []
 
-[[builds]]
-    name = "static"
-    buildRule = "staticlib"
-    outputName = "libraryName.lib"
-    srcDirs = ["../lib"]
-    includePaths = ["../includes"]
+#[[builds]]
+#    name = "static"
+#    buildRule = "staticlib"
+#    outputName = "libraryName.a"
+#    srcDirs = ["../../lib"]
+#    includePaths = ["../../include"]
 
 [[builds]]
-    name = "shared"
+    name = "calculator"
     buildRule = "dynamiclib"
-    outputName = "libraryName.so"
-    srcDirs = ["../lib"]
-    includePaths = ["../includes"]
-
+    outputName = "libCalculator.so"
+    srcDirs = ["../../lib"]
+    includePaths = ["../../include"]
+    # libraryPaths = []
+    # libraries = []
 [[builds]]
     name = "exe"
     buildRule = "exe"
-    requires = ["shared"]
-    outputName = "exeName.exe"
-    srcDirs = ["../src"]
-    includePaths = ["../includes"]
-    libraryPaths = ["./shared"]
-    libraries = ["libraryName.so"]
+    requires = ["calculator"]
+    outputName = "the_calculator.exe"
+    srcDirs = ["../../src"]
+    includePaths = ["../../include"]
+    libraryPaths = ["./calculator"]
+    libraries = ["libCalculator.so"]
+"""
+
+CALCULATOR_CPP = """\
+#include "calculator.h"
+
+float add(float x, float y)
+{
+    return x + y;
+}
+"""
+
+CALCULATOR_H = """\
+#ifndef CALCULATOR_H
+#define CALCULATOR_H
+
+float add(float x, float y);
+
+#endif
+"""
+
+MAIN_CPP = """\
+#include "calculator.h"
+#include <stdio.h>
+
+int main()
+{
+    float result = add(40, 2);
+    printf("The result is %f\\n", result);
+    return 0;
+}
 """
 
 
 def run_init():
     project_dir = Path().cwd()
-    dirs = ["headers", "src", "lib", "builds"]
+    dirs = ["include", "src", "lib", "builds"]
+    dirs = [project_dir / x for x in dirs]
     print(f"Creating directories...")
     for a_dir in dirs:
-        print(f"\t{str(project_dir / a_dir)}")
-        (project_dir / a_dir).mkdir(exist_ok=True)
+        print(f"\t{str(a_dir)}")
+        a_dir.mkdir(exist_ok=True)
 
     windows_targets = [
         "windows-clang_cl-debug",
@@ -204,6 +236,10 @@ def run_init():
         print(f"\t\t{str(toml_file)}")
 
         toml_file.write_text(LinuxDefaultTomlFile)
+
+    (dirs[0] / "calculator.h").write_text(CALCULATOR_H)
+    (dirs[1] / "main.cpp").write_text(MAIN_CPP)
+    (dirs[2] / "calculator.cpp").write_text(CALCULATOR_CPP)
 
 
 def run_build(build_name, target_path):
