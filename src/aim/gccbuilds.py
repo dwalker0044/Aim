@@ -1,7 +1,5 @@
 import functools
 
-from ninja_syntax import Writer
-
 from aim.gccbuildrules import *
 from aim.utils import *
 
@@ -16,7 +14,7 @@ def get_src_files(build):
     src_dirs = build["srcDirs"]
     src_paths = append_paths(directory, src_dirs)
     src_files = flatten(glob("*.cpp", src_paths))
-    assert src_files, "Fail to find any source files."
+    assert src_files, f"Fail to find any source files in {to_str(src_paths)}."
     return src_files
 
 
@@ -128,15 +126,20 @@ class GCCBuilds:
         library_name = build["outputName"]
 
         obj_files = self.add_compile_rule(nfw, build)
+        build_path = build["buildPath"]
+        output_name = str(build_path / library_name)
 
-        nfw.build(outputs=library_name,
-                  rule="ar",
-                  inputs=to_str(obj_files))
+        nfw.build(outputs=output_name,
+                  rule="archive",
+                  inputs=to_str(obj_files),
+                  variables ={
+                      "archiver": self.archiver
+                  })
         nfw.newline()
 
         nfw.build(rule="phony",
-                  inputs=library_name,
-                  outputs=build_name)
+                  inputs=output_name,
+                  outputs=library_name)
         nfw.newline()
 
     def build_executable(self, nfw, build: Dict):
@@ -196,10 +199,12 @@ class GCCBuilds:
 
         obj_files = self.add_compile_rule(nfw, build)
 
+        build_path = build["buildPath"]
+        output_name = str(build_path / lib_name)
         nfw.build(rule="shared",
                   inputs=to_str(obj_files),
                   implicit=libraries,
-                  outputs=lib_name,
+                  outputs=output_name,
                   variables={
                       "compiler": self.cxx_compiler,
                       "includes": includes,
@@ -211,8 +216,9 @@ class GCCBuilds:
         nfw.newline()
 
         nfw.build(rule="phony",
-                  inputs=lib_name,
-                  outputs=build_name)
+                  inputs=output_name,
+                  outputs=lib_name)
+
         nfw.newline()
 
 

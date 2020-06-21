@@ -9,7 +9,8 @@ to do any auto-detection or automatic resolution of variables. What you see is w
 be a bit annoying, build errors are far easier to debug.
 
 ## Limitations
-* No support to MacOS
+* Supports only Linux.
+* Some Windows support via LLVM but hasn't been tested for a while.
 
 ## Why another build tool?
 Other build tools are far too difficult to use. Aim allows you to partition a project into a executables, static libraries
@@ -72,59 +73,63 @@ the compiler (linux-clang++/clang_cl) and the build mode (debug/release). Each t
 Let's take a look at the `linux-clang++-debug/target.toml` file:
 
 ```toml
-cxx = "clang++"                       # the cxx compiler to use.
-cc = "clang"                          # the cc compiler to use.
-ar = "llvm-ar"                        # the archiver to use.
-compilerFrontend="gcc"                # informs aim of which additional flags to include at various stages of the build.
+cxx = "clang++"                         # the cxx compiler to use.
+cc = "clang"                            # the cc compiler to use.
+ar = "llvm-ar"                          # the archiver to use.
+compilerFrontend="gcc"                  # informs aim of which additional flags to include at various stages of the build.
 
-flags = [                             # compiler flags pass to all build targets.
+flags = [                               # compiler flags pass to all build targets.
     "-std=c++17",
     "-g"
 ]
 
-defines = []                          # defines passed to all build targets.
+defines = []                            # defines passed to all build targets.
 
-[[builds]]                            # a list of builds.
-    name = "static"                   # the unique name for this build.
-    buildRule = "staticlib"           # the type of build, in this case create a static library.
-    outputName = "libraryName.lib"    # the library output name,
-    srcDirs = ["../lib"]              # the src directories  to build the static library from.
-    includePaths = ["../includes"]    # additional include paths to use during the build.
+[[builds]]                              # a list of builds.
+    name = "lib_calculator"             # the unique name for this build.
+    buildRule = "staticlib"             # the type of build, in this case create a static library.
+    outputName = "libCalculator.a"      # the library output name,
+    srcDirs = ["../../lib"]             # the src directories  to build the static library from.
+    includePaths = ["../../includes"]   # additional include paths to use during the build.
 
-[[builds]]
-    name = "shared"                   # the unique name for this build.
-    buildRule = "dynamiclib"          # the type of build, in this case create a shared library.
-    outputName = "libraryName.so"     # the library output name,
-    srcDirs = ["../lib"]              # the src directories to build the shared library from.
-    includePaths = ["../includes"]    # additional include paths to use during the build.
-    # libraryPaths = []               # additional library paths to use during the build.
-    # libraries = []                  # additional libraries to use during the build.
+#[[builds]]
+#    name = "lib_calculator_so"         # the unique name for this build.
+#    buildRule = "dynamiclib"           # the type of build, in this case create a shared library.
+#    outputName = "libCalculator.so"    # the library output name,
+#    srcDirs = ["../../lib"]            # the src directories to build the shared library from.
+#    includePaths = ["../../includes"]  # additional include paths to use during the build.
 
 [[builds]]
-    name = "exe"                      # the unique name for this build.
-    buildRule = "exe"                 # the type of build, in this case an executable.
-    requires = ["shared"]             # a build dependency. "shared" will be built first and linked against.
-    outputName = "exeName.exe"        # the exe output name,
-    srcDirs = ["../src"]              # the src directories to build the shared library from.
-    includePaths = ["../includes"]    # additional include paths to use during the build.
-    libraryPaths = ["./shared"]       # you must manually specify the library path to the dependency (requires).
-    libraries = ["libraryName.so"]    # you must manually specify the library name of the dependency (requires).
-    #thirdPartyLibraries = []         # additional libraries to use during the build that are not apart of the Aim build process.
+    name = "exe"                        # the unique name for this build.
+    buildRule = "exe"                   # the type of build, in this case an executable.
+    requires = ["lib_calculator"]       # a build dependency. "shared" will be built first and linked against.
+    outputName = "the_calculator.exe"   # the exe output name,
+    srcDirs = ["../../src"]             # the src directories to build the shared library from.
+    includePaths = ["../../includes"]   # additional include paths to use during the build.
+    libraryPaths = ["./lib_calculator"] # you must manually specify the library path to the dependency (requires).
+    libraries = ["libCalculator.a"]    # you must manually specify the library name of the dependency (requires).
+    #thirdPartyLibraries = []           # additional libraries to use during the build that are not apart of the Aim build process.
 ```
 For the complete set of options, please refer to `src/aim/schema.py`.
+For the full set of the automatic option that Aim adds to build steps, see `gccbuildrules.py` or `msvcbuildrules.py`.
+All paths a relative to the target build directory hence why things like the `srcDirs` are prefixed with `../../`.
 
-Add some files and then build the project:
+By default `init` adds a very simple `main.cpp` and calculator library library to the project. By default the library
+is created as a static library. You can change this to a dynamic library by uncommenting the `lib_calculator_so` build
+and updating the `requires`, `libraryPaths` and `library` fields in the `exe` build.
 
+Build the project:
 `aim build --target exe --path builds/linux-clang++-debug/`
 
-Where `exe` could be replaced with `static` or `shared` depending on what you want to build!
-
-Note, It will be simpler when getting started, to remove from the `exe` build the `requires`, `libraryPaths` and `libraries` fields.
+Note if you build using the dynamic library, the shared object needs to be copied to the executable directory before the
+exe will run. Otherwise you'll get a "shared object not found error."
 
 ### Other remarks
 The target file can be extended with other builds. For example to add unit tests, partition any code that needs to be
 tested into a library. Then create another build with `buildRule="exe"` and add the library to the `requires` list.
 Remember to do this for your executable as well if you have one. The unit tests can now be build like any other build.
 
-### Future improvements
+### Future improvements / known limitations
  * The fields `libraryPaths` and `libraries` should be resolved automatically from the `requires` entry.
+ * The `cc` field isn't actually used at the moment. All build steps are performed by the cxx compiler.
+ * Automatic redistribution of outputs. Currently dynamic libraries need to be manually copied to the executables directory before it will run.
