@@ -4,9 +4,9 @@ Each build target has it's own Target file.
 A build target could be Windows or Linux and variations of the build such as Debug and Release.
 A Target file is written in TOML.
 
-Aim doesn't try to be too clever. For each target the Target file must be written out in full. Aim doesn't attempt
-to do any auto-detection or automatic resolution of variables. What you see is what you get. While the duplication may
-be a bit annoying, build errors are far easier to debug.
+Aim doesn't try to be too clever although it does add a few compiler flags to make building and using libraries simpler.
+
+Each target file must be written out in full. While the duplication may be a bit annoying, build errors are far easier to debug.
 
 ## Limitations
 * Supports only Linux.
