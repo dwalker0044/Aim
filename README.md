@@ -1,12 +1,11 @@
 # Aim
 Aim is a command line tool for building C++ projects.
-Each build target has it's own Target file.
-A build target could be Windows or Linux and variations of the build such as Debug and Release.
-A Target file is written in TOML.
+
+Aim attempts to make building CPP projects for different targets as simple as possible. A build target is typically some combination of operating system, compiler and build type.
+
+Support for a build target is added by writting a `Target` file. Each target has it's own `Target` file. `Target` files are written in `TOML` and must be written out in full for each target. While the duplication may be a bit annoying, build errors are far easier to debug.
 
 Aim doesn't try to be too clever although it does add a few compiler flags to make building and using libraries simpler.
-
-Each target file must be written out in full. While the duplication may be a bit annoying, build errors are far easier to debug.
 
 ## Limitations
 * Supports only Linux.
@@ -66,8 +65,11 @@ Creating common build targets...
 ```
 
 Aim has created some folders for you. Don't feel like you have to use this structure.
+
 The important directory is the `build` directory. Aim has assumed that you want to target `Windows` and `Linux`
-and that you'll need a `debug` and `release` build for each. Each target is made up of the the platform (Linux/Window),
+and that you'll need a `debug` and `release` build for each. 
+
+Each target is made up of the the platform (Linux/Window),
 the compiler (linux-clang++/clang_cl) and the build mode (debug/release). Each target has it's own `target.toml` file.
 
 Let's take a look at the `linux-clang++-debug/target.toml` file:
@@ -111,7 +113,9 @@ defines = []                            # defines passed to all build targets.
     #thirdPartyLibraries = []           # additional libraries to use during the build that are not apart of the Aim build process.
 ```
 For the complete set of options, please refer to `src/aim/schema.py`.
+
 For the full set of the automatic option that Aim adds to build steps, see `gccbuildrules.py` or `msvcbuildrules.py`.
+
 All paths a relative to the target build directory hence why things like the `srcDirs` are prefixed with `../../`.
 
 By default `init` adds a very simple `main.cpp` and calculator library library to the project. By default the library
@@ -119,6 +123,7 @@ is created as a static library. You can change this to a dynamic library by unco
 and updating the `requires`, `libraryPaths` and `library` fields in the `exe` build.
 
 Build the project:
+
 `aim build --target exe --path builds/linux-clang++-debug/`
 
 Note if you build using the dynamic library, the shared object needs to be copied to the executable directory before the
