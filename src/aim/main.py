@@ -17,7 +17,7 @@ def generate_build_rules(builder, project_dir, parsed_toml):
         build_info["directory"] = project_dir
         build_info["flags"] = flags
         build_info["defines"] = defines
-        builder.build(build_info)
+        builder.build(build_info, parsed_toml)
 
 
 def find_build(build_name, builds):

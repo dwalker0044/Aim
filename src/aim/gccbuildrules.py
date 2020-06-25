@@ -20,7 +20,7 @@ def add_ar(nfw: Writer):
 
 def add_exe(nfw: Writer):
     # TODO: origin should only really be added when we need to link against an so.
-    command = f"$compiler $defines $flags $includes $in -o $exe_name -Wl,-rpath='$$ORIGIN' $linker_args"
+    command = f"$compiler $defines $flags $includes $in -o $exe_name -Wl,-rpath='$$ORIGIN:$$ORIGIN/../lib_calculator_so' $linker_args"
     nfw.rule(name="exe",
              description="Builds an executable.",
              command=command)

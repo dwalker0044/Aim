@@ -40,10 +40,31 @@ def get_library_information(build):
     return libraries, link_libraries
 
 
-def get_third_party_library_information(build):
-    third_libraries = build.get("thirdPartyLibraries", [])
-    third_libraries = PrefixLibrary(third_libraries)
-    return third_libraries
+# TODO: Code duplication.
+def find_build(build_name, builds):
+    for build in builds:
+        if build["name"] == build_name:
+            return build
+    else:
+        raise RuntimeError(f"Failed to find build with name: {build_name}")
+
+
+def get_required_library_information(build, parse_toml):
+    requires = build.get("requires", [])
+    if not requires:
+        return [], [], []
+
+    library_names = []
+    library_paths = []
+    for required in requires:
+        the_dep = find_build(required, parse_toml["builds"])
+        library_names.append(the_dep["outputName"])
+        dep_name = the_dep["name"]
+        library_paths.append(dep_name)
+
+    library_paths = append_paths(build["directory"], library_paths)
+    library_paths = PrefixLibraryPath(library_paths)
+    return library_names, PrefixLibrary(library_names), library_paths
 
 
 class GCCBuilds:
@@ -62,7 +83,7 @@ class GCCBuilds:
             add_exe(writer)
             add_shared(writer)
 
-    def build(self, build):
+    def build(self, build, parsed_toml):
         the_build = build["buildRule"]
 
         build_name = build["name"]
@@ -85,9 +106,9 @@ class GCCBuilds:
             if the_build == "staticlib":
                 self.build_static_library(ninja_writer, build)
             elif the_build == "exe":
-                self.build_executable(ninja_writer, build)
+                self.build_executable(ninja_writer, build, parsed_toml)
             elif the_build == "dynamiclib":
-                self.build_dynamic_library(ninja_writer, build)
+                self.build_dynamic_library(ninja_writer, build, parsed_toml)
             else:
                 raise RuntimeError(f"Unknown build type {the_build}.")
 
@@ -122,7 +143,7 @@ class GCCBuilds:
         return obj_files
 
     def build_static_library(self, nfw: Writer, build: Dict):
-        build_name = build["name"]
+        # build_name = build["name"]
         library_name = build["outputName"]
 
         obj_files = self.add_compile_rule(nfw, build)
@@ -132,7 +153,7 @@ class GCCBuilds:
         nfw.build(outputs=output_name,
                   rule="archive",
                   inputs=to_str(obj_files),
-                  variables ={
+                  variables={
                       "archiver": self.archiver
                   })
         nfw.newline()
@@ -142,7 +163,7 @@ class GCCBuilds:
                   outputs=library_name)
         nfw.newline()
 
-    def build_executable(self, nfw, build: Dict):
+    def build_executable(self, nfw, build: Dict, parsed_toml: Dict):
         build_name = build["name"]
         exe_name = build["outputName"]
         cxxflags = build["flags"]
@@ -152,10 +173,11 @@ class GCCBuilds:
 
         includes = get_include_paths(build)
         library_paths = get_library_paths(build)
+        requires_libraries, requires_link_libraries, requires_library_paths = \
+            get_required_library_information(build, parsed_toml)
         libraries, link_libraries = get_library_information(build)
-        third_libraries = get_third_party_library_information(build)
 
-        linker_args = library_paths + link_libraries + third_libraries
+        linker_args = requires_library_paths + requires_link_libraries + library_paths + link_libraries
 
         for requirement in requires:
             ninja_file = (build_path.parent / requirement / "build.ninja").resolve()
@@ -168,7 +190,7 @@ class GCCBuilds:
         nfw.build(outputs=exe_name,
                   rule="exe",
                   inputs=to_str(obj_files),
-                  implicit=libraries,
+                  implicit=requires_libraries,
                   variables={
                       "compiler": self.cxx_compiler,
                       "includes": includes,
@@ -184,18 +206,20 @@ class GCCBuilds:
                   outputs=build_name)
         nfw.newline()
 
-    def build_dynamic_library(self, nfw, build: Dict):
-        build_name = build["name"]
+    def build_dynamic_library(self, nfw, build: Dict, parsed_toml: Dict):
+        # build_name = build["name"]
         lib_name = build["outputName"]
         cxxflags = build["flags"]
         defines = build["defines"]
 
         includes = get_include_paths(build)
         library_paths = get_library_paths(build)
-        libraries, link_libraries = get_library_information(build)
-        third_libraries = get_third_party_library_information(build)
 
-        linker_args = library_paths + link_libraries + third_libraries
+        requires_libraries, requires_link_libraries, requires_library_oaths = \
+            get_required_library_information(build, parsed_toml)
+        libraries, link_libraries = get_library_information(build)
+
+        linker_args = requires_link_libraries + requires_library_oaths + library_paths + link_libraries
 
         obj_files = self.add_compile_rule(nfw, build)
 
@@ -203,7 +227,7 @@ class GCCBuilds:
         output_name = str(build_path / lib_name)
         nfw.build(rule="shared",
                   inputs=to_str(obj_files),
-                  implicit=libraries,
+                  implicit=requires_libraries,
                   outputs=output_name,
                   variables={
                       "compiler": self.cxx_compiler,
