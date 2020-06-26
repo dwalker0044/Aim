@@ -4,14 +4,14 @@ Aim is a command line tool for building C++ projects.
 Aim attempts to make building CPP projects for different targets as simple as possible.
 A build target is typically some combination of operating system, compiler and build type.
 
-Support for a build target is added by writing a `Target` file.
-`Target` files are written in `TOML` and must be written out in full for each target that you need to support.
+Support for a build target is added by writing a target file in TOML format. 
+Each build target has its own `target.toml` file and must be written out in full for each target that you need to support.
 While the duplication may be a bit annoying, build errors are far easier to debug.
 
 Aim doesn't try to be too clever although it does add a few compiler flags to make building and using libraries simpler.
 
 ## Limitations
-* Current only supports Linux.
+* Currently only supports Linux.
 * Some Windows support via LLVM but hasn't been tested for a while.
 
 ## Why another build tool?
@@ -19,7 +19,7 @@ Other build tools are far too difficult to use. Aim allows you to partition a pr
 and shared libraries for any number of different build targets (Debug, Release, Sanitized). All builds occur in their own
 directory and dependency tracking is managed by Ninja.
 
-All you have to do is write the target file in TOML. It is stupidly easy. No weird new syntax that you'll probably
+All you have to do is write the `target.toml` file. It is very easy. No weird new syntax that you'll probably
 use nowhere else.
 
 ## Getting Started
@@ -37,7 +37,7 @@ Then install Aim using Poetry
 
 ```
 poetry install
-``
+```
 
 Check aim has been installed:
 
@@ -45,8 +45,25 @@ Check aim has been installed:
 aim --help
 ```
 
+You should see:
+```
+usage: aim [-h] [-v] {init,build} ...
+
+Aim C++ build tool. For more help run aim <command> --help
+
+positional arguments:
+  {init,build}   Commands
+    init         Initialise the current directory
+    build        The build name
+
+optional arguments:
+  -h, --help     show this help message and exit
+  -v, --version  show program's version number and exit
+
+```
+
 ### Using
-Create a folder for your project `AimDemoProject` and `cd` into it.
+Create a folder for your project and `cd` into it. For example: `AimDemoProject`.
 
 Now initialise the directory:
 
@@ -116,9 +133,8 @@ defines = []                            # defines passed to all build targets.
 ```
 For the complete set of options, please refer to `src/aim/schema.py`.
 
-For the full set of the automatic option that Aim adds to build steps, see `gccbuildrules.py` or `msvcbuildrules.py`.
-
-All paths a relative to the target build directory hence why things like the `srcDirs` are prefixed with `../../`.
+All paths a relative to the target build directory hence why things like the `srcDirs` need to be prefixed with `../../`. 
+This will change in the near future.
 
 `init` adds a very simple `main.cpp` and calculator library library to the project. By default the library
 is built as a static library. You can replace the `lib_calculator` build with with the `lib_calculator_so` build if you
