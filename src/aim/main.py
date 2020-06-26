@@ -137,29 +137,29 @@ flags = [
 
 defines = []
 
-[[builds]]
-    name = "lib_calculator"
-    buildRule = "staticlib"
-    outputName = "libCalculator.a"
-    srcDirs = ["../../lib"]
-    includePaths = ["../../include"]
+[[builds]]                              # a list of builds.
+    name = "lib_calculator"             # the unique name for this build.
+    buildRule = "staticlib"             # the type of build, in this case create a static library.
+    outputName = "libCalculator.a"      # the library output name,
+    srcDirs = ["../../lib"]             # the src directories  to build the static library from.
+    includePaths = ["../../include"]   # additional include paths to use during the build.
 
 #[[builds]]
-#    name = "lib_calculator_so"
-#    buildRule = "dynamiclib"
-#    outputName = "libCalculator.so"
-#    srcDirs = ["../../lib"]
-#    includePaths = ["../../include"]
+#    name = "lib_calculator_so"         # the unique name for this build.
+#    buildRule = "dynamiclib"           # the type of build, in this case create a shared library.
+#    outputName = "libCalculator.so"    # the library output name,
+#    srcDirs = ["../../lib"]            # the src directories to build the shared library from.
+#    includePaths = ["../../include"]  # additional include paths to use during the build.
 
 [[builds]]
-    name = "exe"
-    buildRule = "exe"
-    requires = ["lib_calculator"]
-    outputName = "the_calculator.exe"
-    srcDirs = ["../../src"]
-    includePaths = ["../../include"]
-    libraryPaths = ["./lib_calculator"]
-    libraries = ["libCalculator.a"]
+    name = "exe"                        # the unique name for this build.
+    buildRule = "exe"                   # the type of build, in this case an executable.
+    requires = ["lib_calculator"]       # build dependencies. Aim figures out the linker flags for you.
+    outputName = "the_calculator.exe"   # the exe output name,
+    srcDirs = ["../../src"]             # the src directories to build the shared library from.
+    includePaths = ["../../include"]   # additional include paths to use during the build.
+    #libraryPaths = []                   # additional library paths, used for including third party libraries.
+    #libraries = []                      # additional libraries, used for including third party libraries.
 """
 
 CALCULATOR_CPP = """\
@@ -217,22 +217,22 @@ def run_init():
     for target in windows_targets:
         target_dir = build_dir / target
         target_dir.mkdir(exist_ok=True)
-        print(f"\t{str(target_dir)}")
+        # print(f"\t{str(target_dir)}")
 
         toml_file = target_dir / "target.toml"
         toml_file.touch(exist_ok=True)
-        print(f"\t\t{str(toml_file)}")
+        print(f"\t{str(toml_file)}")
 
         toml_file.write_text(WindowsDefaultTomlFile)
 
     for target in linux_targets:
         target_dir = build_dir / target
         target_dir.mkdir(exist_ok=True)
-        print(f"\t{str(target_dir)}")
+        # print(f"\t{str(target_dir)}")
 
         toml_file = target_dir / "target.toml"
         toml_file.touch(exist_ok=True)
-        print(f"\t\t{str(toml_file)}")
+        print(f"\t{str(toml_file)}")
 
         toml_file.write_text(LinuxDefaultTomlFile)
 
