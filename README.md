@@ -1,4 +1,9 @@
+<p align="center">
+<img src="https://github.com/diwalkerdev/Assets/blob/master/logos/aim.png" width="400" height="400">
+</p>
+
 # Aim
+
 Aim is a command line tool for building C++ projects.
 
 Aim attempts to make building CPP projects for different targets as simple as possible.
