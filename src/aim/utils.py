@@ -1,4 +1,5 @@
 import itertools
+import os
 from pathlib import Path
 from typing import *
 
@@ -41,7 +42,7 @@ def suffix(the_suffix, paths) -> StringList:
     return [str(x) + the_suffix for x in paths]
 
 
-def append_paths(base_path: Path, other_paths: Union[PathList, StringList]):
+def prepend_paths(base_path: Path, other_paths: Union[PathList, StringList]):
     return resolve([base_path / the_path for the_path in other_paths])
 
 
@@ -51,3 +52,7 @@ def resolve(paths: PathList):
 
 def escape_path(word):
     return word.replace('$ ', '$$ ').replace(' ', '$ ').replace(':', '$:')
+
+
+def relpath(src_path: Path, dst_path: Path):
+    return Path(os.path.relpath(str(src_path), str(dst_path)))

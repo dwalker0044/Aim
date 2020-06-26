@@ -49,7 +49,7 @@ def convert_dlls_to_lib(libraries):
 def get_src_files(build):
     directory = build["directory"]
     src_dirs = build["srcDirs"]
-    src_paths = append_paths(directory, src_dirs)
+    src_paths = prepend_paths(directory, src_dirs)
     src_files = flatten(glob("*.cpp", src_paths)) + flatten(glob("*.c", src_paths))
     assert src_files, "Fail to find any source files."
     return src_files
@@ -58,7 +58,7 @@ def get_src_files(build):
 def get_include_paths(build):
     directory = build["directory"]
     include_paths = build.get("includePaths", [])
-    includes = append_paths(directory, include_paths)
+    includes = prepend_paths(directory, include_paths)
     includes = PrefixIncludePath(add_quotes(includes))
     return includes
 
@@ -66,7 +66,7 @@ def get_include_paths(build):
 def get_library_paths(build):
     directory = build["directory"]
     library_paths = build.get("libraryPaths", [])
-    library_paths = append_paths(directory, library_paths)
+    library_paths = prepend_paths(directory, library_paths)
     library_paths = PrefixLibraryPath(add_quotes(library_paths))
     return library_paths
 
@@ -142,7 +142,7 @@ class MSVCBuilds:
         # in the current (exe's) build location.
         build_path = build["buildPath"]
         obj_files = ToObjectFiles(src_files)
-        obj_files = append_paths(build_path, obj_files)
+        obj_files = prepend_paths(build_path, obj_files)
 
         file_pairs = zip(to_str(src_files), to_str(obj_files))
         for src_file, obj_file in file_pairs:

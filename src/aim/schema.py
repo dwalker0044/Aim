@@ -12,10 +12,24 @@ class UniqueNameChecker:
             self.name_lookup.append(value)
 
 
-unique_name_checker = UniqueNameChecker()
+class RequiresExistChecker:
+    def __init__(self, document):
+        self.doc = document
+
+    def check(self, field, requires, error):
+        builds = self.doc["builds"]
+        for value in requires:
+            for build in builds:
+                if value == build["name"]:
+                    break
+            else:
+                error(field, f"{value} does not match any build name. Check spelling.")
 
 
 def target_schema(document):
+    unique_name_checker = UniqueNameChecker()
+    requires_exist_checker = RequiresExistChecker(document)
+
     schema = {
         "cxx": {"required": True, "type": "string"},
         "cc": {"required": True, "type": "string"},
@@ -53,6 +67,7 @@ def target_schema(document):
                         "type": "list",
                         "empty": False,
                         "schema": {"type": "string"},
+                        "check_with": requires_exist_checker.check
                     },
 
                     "buildRule": {
@@ -73,12 +88,14 @@ def target_schema(document):
                         "schema": {"type": "string"}
                     },
 
+                    # TODO add checker to check that the paths exists.
                     "includePaths": {
                         "type": "list",
                         "empty": False,
                         "schema": {"type": "string"}
                     },
 
+                    # TODO add checker to check that the paths exists.
                     "libraryPaths": {
                         "type": "list",
                         "empty": False,
@@ -89,15 +106,6 @@ def target_schema(document):
                     },
 
                     "libraries": {
-                        "type": "list",
-                        "empty": False,
-                        "schema": {"type": "string"},
-                        "dependencies": {
-                            "buildRule": ["exe", "dynamiclib"]
-                        }
-                    },
-
-                    "thirdPartyLibraries": {
                         "type": "list",
                         "empty": False,
                         "schema": {"type": "string"},

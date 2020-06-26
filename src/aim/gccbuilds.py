@@ -12,7 +12,7 @@ ToObjectFiles = src_to_o
 def get_src_files(build):
     directory = build["directory"]
     src_dirs = build["srcDirs"]
-    src_paths = append_paths(directory, src_dirs)
+    src_paths = prepend_paths(directory, src_dirs)
     src_files = flatten(glob("*.cpp", src_paths))
     assert src_files, f"Fail to find any source files in {to_str(src_paths)}."
     return src_files
@@ -21,7 +21,7 @@ def get_src_files(build):
 def get_include_paths(build):
     directory = build["directory"]
     include_paths = build.get("includePaths", [])
-    includes = append_paths(directory, include_paths)
+    includes = prepend_paths(directory, include_paths)
     includes = PrefixIncludePath(includes)
     return includes
 
@@ -29,7 +29,7 @@ def get_include_paths(build):
 def get_library_paths(build):
     directory = build["directory"]
     library_paths = build.get("libraryPaths", [])
-    library_paths = append_paths(directory, library_paths)
+    library_paths = prepend_paths(directory, library_paths)
     library_paths = PrefixLibraryPath(library_paths)
     return library_paths
 
@@ -49,7 +49,7 @@ def find_build(build_name, builds):
         raise RuntimeError(f"Failed to find build with name: {build_name}")
 
 
-def get_required_library_information(build, parse_toml):
+def get_required_library_information(build, parsed_toml):
     requires = build.get("requires", [])
     if not requires:
         return [], [], []
@@ -57,14 +57,37 @@ def get_required_library_information(build, parse_toml):
     library_names = []
     library_paths = []
     for required in requires:
-        the_dep = find_build(required, parse_toml["builds"])
+        the_dep = find_build(required, parsed_toml["builds"])
         library_names.append(the_dep["outputName"])
         dep_name = the_dep["name"]
         library_paths.append(dep_name)
 
-    library_paths = append_paths(build["directory"], library_paths)
+    library_paths = prepend_paths(build["directory"], library_paths)
     library_paths = PrefixLibraryPath(library_paths)
     return library_names, PrefixLibrary(library_names), library_paths
+
+
+def get_rpath(build: Dict, parsed_toml: Dict):
+    # Good blog post about rpath:
+    # https://medium.com/@nehckl0/creating-relocatable-linux-executables-by-setting-rpath-with-origin-45de573a2e98
+    requires = build.get("requires", [])
+    library_paths = []
+
+    for required in requires:
+        the_dep = find_build(required, parsed_toml["builds"])
+        if the_dep["buildRule"] == "dynamiclib":
+            library_paths.append(the_dep["name"])
+
+    build_dir = Path(build["directory"]).resolve()
+    current_build_dir = build_dir / build["name"]
+    library_paths = prepend_paths(build_dir, library_paths)
+    relative_paths = [relpath(Path(lib_path), current_build_dir) for lib_path in library_paths]
+
+    relative_paths = [f"$$ORIGIN/{rel_path}" for rel_path in relative_paths]
+    relative_paths = ["$$ORIGIN"] + relative_paths
+
+    relative_paths_string = escape_path(":".join(relative_paths))
+    return f"-Wl,-rpath='{relative_paths_string}'"
 
 
 class GCCBuilds:
@@ -125,7 +148,7 @@ class GCCBuilds:
         # in the current (exe's) build location.
         build_path = build["buildPath"]
         obj_files = ToObjectFiles(src_files)
-        obj_files = append_paths(build_path, obj_files)
+        obj_files = prepend_paths(build_path, obj_files)
 
         file_pairs = zip(to_str(src_files), to_str(obj_files))
         for src_file, obj_file in file_pairs:
@@ -177,7 +200,8 @@ class GCCBuilds:
             get_required_library_information(build, parsed_toml)
         libraries, link_libraries = get_library_information(build)
 
-        linker_args = requires_library_paths + requires_link_libraries + library_paths + link_libraries
+        rpath = get_rpath(build, parsed_toml)
+        linker_args = [rpath] + requires_library_paths + requires_link_libraries + library_paths + link_libraries
 
         for requirement in requires:
             ninja_file = (build_path.parent / requirement / "build.ninja").resolve()
