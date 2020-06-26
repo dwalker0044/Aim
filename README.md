@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/diwalkerdev/Assets/blob/master/logos/aim.png" width="400" height="400">
+<img src="https://github.com/diwalkerdev/Assets/blob/master/logos/aim.png" width="300" height="300">
 </p>
 
 # Aim
