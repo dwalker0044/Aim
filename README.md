@@ -1,14 +1,17 @@
 # Aim
 Aim is a command line tool for building C++ projects.
 
-Aim attempts to make building CPP projects for different targets as simple as possible. A build target is typically some combination of operating system, compiler and build type.
+Aim attempts to make building CPP projects for different targets as simple as possible.
+A build target is typically some combination of operating system, compiler and build type.
 
-Support for a build target is added by writting a `Target` file. Each target has it's own `Target` file. `Target` files are written in `TOML` and must be written out in full for each target. While the duplication may be a bit annoying, build errors are far easier to debug.
+Support for a build target is added by writing a `Target` file.
+`Target` files are written in `TOML` and must be written out in full for each target that you need to support.
+While the duplication may be a bit annoying, build errors are far easier to debug.
 
 Aim doesn't try to be too clever although it does add a few compiler flags to make building and using libraries simpler.
 
 ## Limitations
-* Supports only Linux.
+* Current only supports Linux.
 * Some Windows support via LLVM but hasn't been tested for a while.
 
 ## Why another build tool?
@@ -32,18 +35,24 @@ Clone the project.
 
 Then install Aim using Poetry
 
-`poetry install`
+```
+poetry install
+``
 
 Check aim has been installed:
 
-`aim --help`
+```
+aim --help
+```
 
 ### Using
 Create a folder for your project `AimDemoProject` and `cd` into it.
 
 Now initialise the directory:
 
-`aim init`
+```
+aim init
+```
 
 The following output will be displayed:
 
@@ -54,23 +63,17 @@ Creating directories...
 	/home/username/AimDemoProject/lib
 	/home/username/AimDemoProject/builds
 Creating common build targets...
-	/home/username/AimDemoProject/builds/windows-clang_cl-debug
-		/home/username/AimDemoProject/builds/windows-clang_cl-debug/target.toml
-	/home/username/AimDemoProject/builds/windows-clang_cl-release
-		/home/username/AimDemoProject/builds/windows-clang_cl-release/target.toml
-	/home/username/AimDemoProject/builds/linux-clang++-debug
-		/home/username/AimDemoProject/builds/linux-clang++-debug/target.toml
-	/home/username/AimDemoProject/builds/linux-clang++-release
-		/home/username/AimDemoProject/builds/linux-clang++-release/target.toml
+	/home/username/AimTest/builds/windows-clang_cl-debug/target.toml
+	/home/username/AimTest/builds/windows-clang_cl-release/target.toml
+	/home/username/AimTest/builds/linux-clang++-debug/target.toml
+	/home/username/AimTest/builds/linux-clang++-release/target.toml
 ```
 
 Aim has created some folders for you. Don't feel like you have to use this structure.
 
 The important directory is the `build` directory. Aim has assumed that you want to target `Windows` and `Linux`
-and that you'll need a `debug` and `release` build for each. 
-
-Each target is made up of the the platform (Linux/Window),
-the compiler (linux-clang++/clang_cl) and the build mode (debug/release). Each target has it's own `target.toml` file.
+operating systems, use `clang_cl` compiler for Windows and `clang++` for Linux and `debug` and `release` builds created
+for each.
 
 Let's take a look at the `linux-clang++-debug/target.toml` file:
 
@@ -92,25 +95,24 @@ defines = []                            # defines passed to all build targets.
     buildRule = "staticlib"             # the type of build, in this case create a static library.
     outputName = "libCalculator.a"      # the library output name,
     srcDirs = ["../../lib"]             # the src directories  to build the static library from.
-    includePaths = ["../../includes"]   # additional include paths to use during the build.
+    includePaths = ["../../include"]   # additional include paths to use during the build.
 
 #[[builds]]
 #    name = "lib_calculator_so"         # the unique name for this build.
 #    buildRule = "dynamiclib"           # the type of build, in this case create a shared library.
 #    outputName = "libCalculator.so"    # the library output name,
 #    srcDirs = ["../../lib"]            # the src directories to build the shared library from.
-#    includePaths = ["../../includes"]  # additional include paths to use during the build.
+#    includePaths = ["../../include"]  # additional include paths to use during the build.
 
 [[builds]]
     name = "exe"                        # the unique name for this build.
     buildRule = "exe"                   # the type of build, in this case an executable.
-    requires = ["lib_calculator"]       # a build dependency. "shared" will be built first and linked against.
+    requires = ["lib_calculator"]       # build dependencies. Aim figures out the linker flags for you.
     outputName = "the_calculator.exe"   # the exe output name,
     srcDirs = ["../../src"]             # the src directories to build the shared library from.
-    includePaths = ["../../includes"]   # additional include paths to use during the build.
-    libraryPaths = ["./lib_calculator"] # you must manually specify the library path to the dependency (requires).
-    libraries = ["libCalculator.a"]    # you must manually specify the library name of the dependency (requires).
-    #thirdPartyLibraries = []           # additional libraries to use during the build that are not apart of the Aim build process.
+    includePaths = ["../../include"]   # additional include paths to use during the build.
+    #libraryPaths = []                   # additional library paths, used for including third party libraries.
+    #libraries = []                      # additional libraries, used for including third party libraries.
 ```
 For the complete set of options, please refer to `src/aim/schema.py`.
 
@@ -118,23 +120,25 @@ For the full set of the automatic option that Aim adds to build steps, see `gccb
 
 All paths a relative to the target build directory hence why things like the `srcDirs` are prefixed with `../../`.
 
-By default `init` adds a very simple `main.cpp` and calculator library library to the project. By default the library
-is created as a static library. You can change this to a dynamic library by uncommenting the `lib_calculator_so` build
-and updating the `requires`, `libraryPaths` and `library` fields in the `exe` build.
+`init` adds a very simple `main.cpp` and calculator library library to the project. By default the library
+is built as a static library. You can replace the `lib_calculator` build with with the `lib_calculator_so` build if you
+want the library to be created as a dynamic library. When using dynamic libraries Aim will update `rpath` to include
+any dynamic libraries that an executable uses.
 
-Build the project:
+Build and run the project:
 
-`aim build --target exe --path builds/linux-clang++-debug/`
+```
+aim build --target exe --path builds/linux-clang++-debug/
+./builds/linux-clang++-debug/exe/the_calculator.exe
+```
 
-Note if you build using the dynamic library, the shared object needs to be copied to the executable directory before the
-exe will run. Otherwise you'll get a "shared object not found error."
+## Other remarks
+The target file can be extended with other builds. For example to add unit tests. Begin by partitioning any code that
+needs to be tested into a library. Then create another build for the test. Since unit tests are really an executable,
+set `buildRule="exe"` and add the library to the `requires` list. Remember to update the build for the primary
+executable as well if you have one.
 
-### Other remarks
-The target file can be extended with other builds. For example to add unit tests, partition any code that needs to be
-tested into a library. Then create another build with `buildRule="exe"` and add the library to the `requires` list.
-Remember to do this for your executable as well if you have one. The unit tests can now be build like any other build.
+The unit tests can now be built and run like any other executable.
 
-### Future improvements / known limitations
- * The fields `libraryPaths` and `libraries` should be resolved automatically from the `requires` entry.
+## Future improvements / known limitations
  * The `cc` field isn't actually used at the moment. All build steps are performed by the cxx compiler.
- * Automatic redistribution of outputs. Currently dynamic libraries need to be manually copied to the executables directory before it will run.

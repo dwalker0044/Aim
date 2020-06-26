@@ -1,6 +1,6 @@
 cxx = "clang++"
 cc = "clang"
-ar = "llvm-ar"
+ar = "ar"
 compilerFrontend="gcc"
 
 flags = [
@@ -28,7 +28,5 @@ defines = []
     requires = ["shared"]
     buildRule = "exe"
     outputName = "project.exe"
-    srcDirs = ["../app", "../libproject"]
+    srcDirs = ["../app"]
     includePaths = ["../libproject"]
-    libraryPaths = ["./exe"]
-    libraries = ["libProject.so"]
