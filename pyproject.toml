@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aim"
-version = "0.1.3"
+version = "0.1.6"
 description = "Simple C++ build tool."
 authors = ["David Walker <david.walker@email.com>"]
 license = "MIT"
@@ -13,9 +13,9 @@ ninja-syntax = "^1.7"
 
 [tool.poetry.dev-dependencies]
 
+[tool.poetry.scripts]
+aim = "aim.main:entry"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
-[tool.poetry.scripts]
-aim = "aim.main:entry"

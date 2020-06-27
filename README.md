@@ -6,8 +6,8 @@
 
 Aim is a command line tool for building C++ projects.
 
-Aim attempts to make building CPP projects for different targets as simple as possible.
-A build target is typically some combination of operating system, compiler and build type.
+Aim attempts to make building C++ projects, for different targets, as simple as possible.
+A build target is some combination of operating system, compiler and build type (and possibly other things). For example `linux-clang++-release`.
 
 Support for a build target is added by writing a target file in TOML format. 
 Each build target has its own `target.toml` file and must be written out in full for each target that you need to support.
@@ -28,8 +28,9 @@ All you have to do is write the `target.toml` file. It is very easy. No weird ne
 use nowhere else.
 
 ## Getting Started
-Aim is a python project. It uses [poetry](https://python-poetry.org/) for the project and dependency manager.
-Installation must be done using `poetry`.
+Aim is a python project. It uses [poetry](https://python-poetry.org/) for the dependency manager.
+
+Currently there is no installer and so installation must be done using `poetry` (see Installing below).
 
 ### Prerequisites
 * Python 3.7 or above.
@@ -38,19 +39,31 @@ Installation must be done using `poetry`.
 ### Installing
 Clone the project.
 
-Then install Aim using Poetry
+Then install the dependencies (this also creates a virtual environment):
 
 ```
 poetry install
 ```
 
-Check aim has been installed:
+Unfortunately, unlike `setuptools` there is no means to do a 'dev install' using poetry. So simplest thing to, in order to use Aim, is to create an alias. The alias adds Aim to `PYTHONPATH` to resolve import/module paths and then uses Python in the virtualenv created by poetry to run Aim.
+
+For `bash`:
+```
+alias aim="PYTHONPATH=$PWD/src $(poetry env info -p)/bin/python $PWD/src/aim/main.py"
+```
+
+For `fish` shell:
+```
+alias aim="PYTHONPATH=$PWD/src "(poetry env info -p)"/bin/python $PWD/src/aim/main.py"
+```
+
+Check the alias works correctly:
 
 ```
 aim --help
 ```
 
-You should see:
+You should see something similar to:
 ```
 usage: aim [-h] [-v] {init,build} ...
 
@@ -73,6 +86,8 @@ Create a folder for your project and `cd` into it. For example: `AimDemoProject`
 Now initialise the directory:
 
 ```
+mkdir AimDemoProject
+cd AimDemoProject
 aim init
 ```
 
@@ -91,11 +106,9 @@ Creating common build targets...
 	/home/username/AimTest/builds/linux-clang++-release/target.toml
 ```
 
-Aim has created some folders for you. Don't feel like you have to use this structure.
+Aim has created some folders for your project and some build targets for you. Don't feel like you have to keep to the project structure, you can modify the target files to point to any directory.
 
-The important directory is the `build` directory. Aim has assumed that you want to target `Windows` and `Linux`
-operating systems, use `clang_cl` compiler for Windows and `clang++` for Linux and `debug` and `release` builds created
-for each.
+Aim has create some common build targets: `Windows` and `Linux` operating systems, using `clang_cl` compiler for Windows and `clang++` for Linux, and `debug` and `release` builds created for each. Simply add/delete target directories as required.
 
 Let's take a look at the `linux-clang++-debug/target.toml` file:
 

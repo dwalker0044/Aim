@@ -7,6 +7,7 @@ from aim import gccbuilds
 from aim import msvcbuilds
 from aim.schema import target_schema
 from aim.utils import *
+from aim.version import __version__
 
 
 def generate_build_rules(builder, project_dir, parsed_toml):
@@ -60,8 +61,9 @@ def parse_toml_file(parsed_toml, project_dir: Path):
 
 def entry():
     # TODO: Get version automatically from the pyproject.toml file.
-    parser = argparse.ArgumentParser(description="Aim C++ build tool. For more help run aim <command> --help")
-    parser.add_argument("-v", "--version", action="version", version="0.1.4")
+    parser = argparse.ArgumentParser(description=f"Version {__version__}")
+
+    parser.add_argument("-v", "--version", action="version", version=__version__)
     sub_parser = parser.add_subparsers(dest="command", help="Commands")
     init_parser = sub_parser.add_parser("init", help="Initialise the current directory")
 
