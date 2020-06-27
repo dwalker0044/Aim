@@ -10,12 +10,13 @@ from aim.utils import *
 from aim.version import __version__
 
 
-def generate_build_rules(builder, project_dir, parsed_toml):
+def generate_build_rules(builder, project_dir, build_dir, parsed_toml):
     flags = parsed_toml.get("flags", [])
     defines = parsed_toml.get("defines", [])
     builds = parsed_toml["builds"]
     for build_info in builds:
         build_info["directory"] = project_dir
+        build_info["build_dir"] = build_dir
         build_info["flags"] = flags
         build_info["defines"] = defines
         builder.build(build_info, parsed_toml)
@@ -41,7 +42,7 @@ def run_ninja(working_dir, build_name):
         print(result.stderr.decode("utf-8"))
 
 
-def parse_toml_file(parsed_toml, project_dir: Path):
+def parse_toml_file(parsed_toml, project_dir: Path, build_dir: Path):
     compiler_c = parsed_toml["cc"]
     compiler_cpp = parsed_toml["cxx"]
     archiver = parsed_toml["ar"]
@@ -56,7 +57,7 @@ def parse_toml_file(parsed_toml, project_dir: Path):
                                       compiler_c,
                                       archiver)
 
-    generate_build_rules(builder, project_dir, parsed_toml)
+    generate_build_rules(builder, project_dir, build_dir, parsed_toml)
 
 
 def entry():
@@ -246,17 +247,17 @@ def run_init():
 
 
 def run_build(build_name, target_path):
-    project_dir = Path().cwd()
+    build_dir = Path().cwd()
 
     if target_path:
         target_path = Path(target_path)
         if target_path.is_absolute():
-            project_dir = target_path
+            build_dir = target_path
         else:
-            project_dir = project_dir / Path(target_path)
+            build_dir = build_dir / Path(target_path)
 
     # ninja_path = project_dir / "build.ninja"
-    toml_path = project_dir / "target.toml"
+    toml_path = build_dir / "target.toml"
 
     with toml_path.open("r") as toml_file:
         parsed_toml = toml.loads(toml_file.read())
@@ -269,7 +270,7 @@ def run_build(build_name, target_path):
         #     ninja_writer = Writer(ninja_file)
 
         root_dir = parsed_toml["projectRoot"]
-        project_dir = (project_dir / root_dir).resolve()
+        project_dir = (build_dir / root_dir).resolve()
         assert project_dir.exists(), f"{str(project_dir)} does not exist."
 
         try:
@@ -277,9 +278,9 @@ def run_build(build_name, target_path):
         except RuntimeError as e:
             print(f"Error: {e.args[0]}")
             exit(-1)
-        parse_toml_file(parsed_toml, project_dir)
+        parse_toml_file(parsed_toml, project_dir, build_dir)
 
-        run_ninja(project_dir, the_build["name"])
+        run_ninja(build_dir, the_build["name"])
 
 
 if __name__ == '__main__':

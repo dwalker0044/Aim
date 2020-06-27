@@ -97,7 +97,7 @@ class GCCBuilds:
         self.archiver = archiver
 
     def add_rules(self, build):
-        directory = build["directory"]
+        directory = build["build_dir"]
         ninja_path = directory / "rules.ninja"
         with ninja_path.open("w+") as ninja_file:
             writer = Writer(ninja_file)
@@ -111,8 +111,9 @@ class GCCBuilds:
 
         build_name = build["name"]
         project_dir = build["directory"]
+        build_dir = build["build_dir"]
 
-        build_path = project_dir / build_name
+        build_path = build_dir / build_name
         build_path.mkdir(parents=True, exist_ok=True)
 
         ninja_path = build_path / "build.ninja"
@@ -122,7 +123,7 @@ class GCCBuilds:
 
         with ninja_path.open("w+") as ninja_file:
             ninja_writer = Writer(ninja_file)
-            rule_path = (project_dir / "rules.ninja").resolve()
+            rule_path = (build_dir / "rules.ninja").resolve()
             ninja_writer.include(escape_path(str(rule_path)))
             ninja_writer.newline()
 
