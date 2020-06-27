@@ -1,5 +1,7 @@
 import cerberus
 
+from pathlib import Path
+
 
 class UniqueNameChecker:
     def __init__(self):
@@ -26,9 +28,26 @@ class RequiresExistChecker:
                 error(field, f"{value} does not match any build name. Check spelling.")
 
 
-def target_schema(document):
+class DirectoriesExistsChecker:
+    def __init__(self, project_dir):
+        self.project_dir = project_dir
+
+    def check(self, field, dirs, error):
+        dirs = [(self.project_dir / directory).resolve() for directory in dirs]
+
+        for directory in dirs:
+            if not directory.exists():
+                error(field, f"{str(directory)} does not exist.")
+                break
+            if not directory.is_dir():
+                error(f"{str(directory)} is not a dir.")
+                break
+
+
+def target_schema(document, project_dir):
     unique_name_checker = UniqueNameChecker()
     requires_exist_checker = RequiresExistChecker(document)
+    dir_exists_checker = DirectoriesExistsChecker(project_dir)
 
     schema = {
         "cxx": {"required": True, "type": "string"},
@@ -49,6 +68,12 @@ def target_schema(document):
         "defines": {
             "type": "list",
             "schema": {"type": "string"}
+        },
+
+        "projectRoot": {
+            "required": True,
+            "type": "string",
+            "empty": False
         },
 
         "builds": {
@@ -85,24 +110,25 @@ def target_schema(document):
                         "required": True,
                         "empty": False,
                         "type": "list",
-                        "schema": {"type": "string"}
+                        "schema": {"type": "string"},
+                        "check_with": dir_exists_checker.check,
                     },
 
-                    # TODO add checker to check that the paths exists.
                     "includePaths": {
                         "type": "list",
                         "empty": False,
-                        "schema": {"type": "string"}
+                        "schema": {"type": "string"},
+                        "check_with": dir_exists_checker.check,
                     },
 
-                    # TODO add checker to check that the paths exists.
                     "libraryPaths": {
                         "type": "list",
                         "empty": False,
                         "schema": {"type": "string"},
+                        "check_with": dir_exists_checker.check,
                         "dependencies": {
                             "buildRule": ["exe", "dynamiclib"]
-                        }
+                        },
                     },
 
                     "libraries": {

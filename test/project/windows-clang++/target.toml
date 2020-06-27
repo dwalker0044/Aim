@@ -9,24 +9,26 @@ flags = [
 
 defines = []
 
+projectRoot = ".."
+
 [[builds]]
     name = "static"
     buildRule = "staticlib"
     outputName = "project.lib"
-    srcDirs = ["../libproject"]
-    includePaths = ["../libproject"]
+    srcDirs = ["libproject"]
+    includePaths = ["libproject"]
 
 [[builds]]
     name = "shared"
     buildRule = "dynamiclib"
     outputName = "libProject.so"
-    srcDirs = ["../libproject"]
-    includePaths = ["../libproject"]
+    srcDirs = ["libproject"]
+    includePaths = ["libproject"]
 
 [[builds]]
     name = "exe"
     requires = ["shared"]
     buildRule = "exe"
     outputName = "project.exe"
-    srcDirs = ["../app"]
-    includePaths = ["../libproject"]
+    srcDirs = ["app"]
+    includePaths = ["libproject"]
