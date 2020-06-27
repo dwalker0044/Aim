@@ -113,6 +113,7 @@ Aim has create some common build targets: `Windows` and `Linux` operating system
 Let's take a look at the `linux-clang++-debug/target.toml` file:
 
 ```toml
+projectRoot = "../.."                   # the relative path from the target build directory to the project src directory.
 cxx = "clang++"                         # the cxx compiler to use.
 cc = "clang"                            # the cc compiler to use.
 ar = "llvm-ar"                          # the archiver to use.

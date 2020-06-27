@@ -127,6 +127,8 @@ defines = []
 """
 
 LinuxDefaultTomlFile = """\
+projectRoot = "../.."
+
 cxx = "clang++"
 cc = "clang"
 ar = "ar"
@@ -143,23 +145,23 @@ defines = []
     name = "lib_calculator"             # the unique name for this build.
     buildRule = "staticlib"             # the type of build, in this case create a static library.
     outputName = "libCalculator.a"      # the library output name,
-    srcDirs = ["../../lib"]             # the src directories  to build the static library from.
-    includePaths = ["../../include"]   # additional include paths to use during the build.
+    srcDirs = ["lib"]                   # the src directories  to build the static library from.
+    includePaths = ["include"]    # additional include paths to use during the build.
 
 #[[builds]]
 #    name = "lib_calculator_so"         # the unique name for this build.
 #    buildRule = "dynamiclib"           # the type of build, in this case create a shared library.
 #    outputName = "libCalculator.so"    # the library output name,
-#    srcDirs = ["../../lib"]            # the src directories to build the shared library from.
-#    includePaths = ["../../include"]  # additional include paths to use during the build.
+#    srcDirs = ["lib"]                  # the src directories to build the shared library from.
+#    includePaths = ["include"]         # additional include paths to use during the build.
 
 [[builds]]
     name = "exe"                        # the unique name for this build.
     buildRule = "exe"                   # the type of build, in this case an executable.
     requires = ["lib_calculator"]       # build dependencies. Aim figures out the linker flags for you.
     outputName = "the_calculator.exe"   # the exe output name,
-    srcDirs = ["../../src"]             # the src directories to build the shared library from.
-    includePaths = ["../../include"]   # additional include paths to use during the build.
+    srcDirs = ["src"]                   # the src directories to build the shared library from.
+    includePaths = ["include"]          # additional include paths to use during the build.
     #libraryPaths = []                   # additional library paths, used for including third party libraries.
     #libraries = []                      # additional libraries, used for including third party libraries.
 """
@@ -266,9 +268,16 @@ def run_build(build_name, target_path):
         # with ninja_path.open("w+") as ninja_file:
         #     ninja_writer = Writer(ninja_file)
 
-        target_schema(parsed_toml)
-        parse_toml_file(parsed_toml,
-                        project_dir)
+        root_dir = parsed_toml["projectRoot"]
+        project_dir = (project_dir / root_dir).resolve()
+        assert project_dir.exists(), f"{str(project_dir)} does not exist."
+
+        try:
+            target_schema(parsed_toml, project_dir)
+        except RuntimeError as e:
+            print(f"Error: {e.args[0]}")
+            exit(-1)
+        parse_toml_file(parsed_toml, project_dir)
 
         run_ninja(project_dir, the_build["name"])
 
