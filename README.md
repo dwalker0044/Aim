@@ -1,10 +1,12 @@
 <p align="center">
-<img src="https://github.com/diwalkerdev/Assets/blob/master/logos/aim.png" width="300" height="300">
+<img src="https://github.com/diwalkerdev/Assets/blob/master/Aim/aim.png" width="300" height="300">
 </p>
 
 # Aim
 
 Aim is a command line tool for building C++ projects.
+
+![Aim Installation]("https://github.com/diwalkerdev/Assets/blob/master/Aim/aim-installation.gif")
 
 Aim attempts to make building C++ projects, for different targets, as simple as possible.
 A build target is some combination of operating system, compiler and build type (and possibly other things). For example `linux-clang++-release`.
