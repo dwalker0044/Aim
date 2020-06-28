@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/diwalkerdev/Assets/blob/master/logos/aim.png" width="300" height="300">
+<img src="https://github.com/diwalkerdev/Assets/blob/master/Aim/aim.png" width="300" height="300">
 </p>
 
 # Aim
@@ -37,6 +37,9 @@ Currently there is no installer and so installation must be done using `poetry` 
 * [poetry](https://python-poetry.org/)
 
 ### Installing
+
+<img src="https://github.com/diwalkerdev/Assets/blob/master/Aim/aim-installation.gif?raw=true" width="600px">
+
 Clone the project.
 
 Then install the dependencies (this also creates a virtual environment):
@@ -81,6 +84,9 @@ optional arguments:
 ```
 
 ### Using
+
+<img src="https://github.com/diwalkerdev/Assets/blob/master/Aim/aim-init-demo.gif?raw=true" width="600px">
+
 Create a folder for your project and `cd` into it. For example: `AimDemoProject`.
 
 Now initialise the directory:
