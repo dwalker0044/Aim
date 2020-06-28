@@ -27,7 +27,7 @@ def get_include_paths(build):
 
 
 def get_library_paths(build):
-    directory = build["directory"]
+    directory = build["build_dir"]
     library_paths = build.get("libraryPaths", [])
     library_paths = prepend_paths(directory, library_paths)
     library_paths = PrefixLibraryPath(library_paths)
@@ -62,7 +62,7 @@ def get_required_library_information(build, parsed_toml):
         dep_name = the_dep["name"]
         library_paths.append(dep_name)
 
-    library_paths = prepend_paths(build["directory"], library_paths)
+    library_paths = prepend_paths(build["build_dir"], library_paths)
     library_paths = PrefixLibraryPath(library_paths)
     return library_names, PrefixLibrary(library_names), library_paths
 
@@ -78,7 +78,7 @@ def get_rpath(build: Dict, parsed_toml: Dict):
         if the_dep["buildRule"] == "dynamiclib":
             library_paths.append(the_dep["name"])
 
-    build_dir = Path(build["directory"]).resolve()
+    build_dir = Path(build["build_dir"]).resolve()
     current_build_dir = build_dir / build["name"]
     library_paths = prepend_paths(build_dir, library_paths)
     relative_paths = [relpath(Path(lib_path), current_build_dir) for lib_path in library_paths]
