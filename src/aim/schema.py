@@ -57,7 +57,7 @@ def target_schema(document, project_dir):
         "compilerFrontend": {
             "required": True,
             "type": "string",
-            "allowed": ["msvc", "gcc"]
+            "allowed": ["msvc", "gcc", "osx"]
         },
 
         "flags": {

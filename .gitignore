@@ -136,3 +136,4 @@ dmypy.json
 .ninja_deps
 .ninja_log
 *.ninja
+*.dylib

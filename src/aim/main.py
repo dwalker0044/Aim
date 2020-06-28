@@ -5,6 +5,7 @@ import toml
 
 from aim import gccbuilds
 from aim import msvcbuilds
+from aim import osxbuilds
 from aim.schema import target_schema
 from aim.utils import *
 from aim.version import __version__
@@ -52,6 +53,10 @@ def parse_toml_file(parsed_toml, project_dir: Path, build_dir: Path):
         builder = msvcbuilds.MSVCBuilds(compiler_cpp,
                                         compiler_c,
                                         archiver)
+    elif frontend == "osx":
+        builder = osxbuilds.OsxBuilds(compiler_cpp,
+                                      compiler_c,
+                                      archiver)
     else:
         builder = gccbuilds.GCCBuilds(compiler_cpp,
                                       compiler_c,
