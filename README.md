@@ -6,8 +6,6 @@
 
 Aim is a command line tool for building C++ projects.
 
-![Aim Installation]("https://github.com/diwalkerdev/Assets/blob/master/Aim/aim-installation.gif")
-
 Aim attempts to make building C++ projects, for different targets, as simple as possible.
 A build target is some combination of operating system, compiler and build type (and possibly other things). For example `linux-clang++-release`.
 
@@ -39,6 +37,9 @@ Currently there is no installer and so installation must be done using `poetry` 
 * [poetry](https://python-poetry.org/)
 
 ### Installing
+
+<img src="https://github.com/diwalkerdev/Assets/blob/master/Aim/aim-installation.gif?raw=true" width="600px">
+
 Clone the project.
 
 Then install the dependencies (this also creates a virtual environment):
@@ -83,6 +84,9 @@ optional arguments:
 ```
 
 ### Using
+
+<img src="https://github.com/diwalkerdev/Assets/blob/master/Aim/aim-init-demo.gif?raw=true" width="600px">
+
 Create a folder for your project and `cd` into it. For example: `AimDemoProject`.
 
 Now initialise the directory:
