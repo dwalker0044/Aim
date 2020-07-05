@@ -11,18 +11,6 @@ from aim.utils import *
 from aim.version import __version__
 
 
-def generate_build_rules(builder, project_dir, build_dir, parsed_toml):
-    flags = parsed_toml.get("flags", [])
-    defines = parsed_toml.get("defines", [])
-    builds = parsed_toml["builds"]
-    for build_info in builds:
-        build_info["directory"] = project_dir
-        build_info["build_dir"] = build_dir
-        build_info["flags"] = flags
-        build_info["defines"] = defines
-        builder.build(build_info, parsed_toml)
-
-
 def find_build(build_name, builds):
     for build in builds:
         if build["name"] == build_name:
@@ -43,26 +31,38 @@ def run_ninja(working_dir, build_name):
         print(result.stderr.decode("utf-8"))
 
 
+from aim.toolchain import ToolChain
+from aim.osxbuilds import build as osx_build
+
+
 def parse_toml_file(parsed_toml, project_dir: Path, build_dir: Path):
     compiler_c = parsed_toml["cc"]
     compiler_cpp = parsed_toml["cxx"]
     archiver = parsed_toml["ar"]
     frontend = parsed_toml["compilerFrontend"]
+    tc = ToolChain(compiler_cpp, compiler_c, archiver)
 
-    if frontend == "msvc":
-        builder = msvcbuilds.MSVCBuilds(compiler_cpp,
-                                        compiler_c,
-                                        archiver)
-    elif frontend == "osx":
-        builder = osxbuilds.OsxBuilds(compiler_cpp,
-                                      compiler_c,
-                                      archiver)
-    else:
-        builder = gccbuilds.GCCBuilds(compiler_cpp,
-                                      compiler_c,
-                                      archiver)
+    flags = parsed_toml.get("flags", [])
+    defines = parsed_toml.get("defines", [])
+    builds = parsed_toml["builds"]
+    for build_info in builds:
+        build_info["directory"] = project_dir
+        build_info["build_dir"] = build_dir
+        build_info["flags"] = flags
+        build_info["defines"] = defines
+        builder.build(build_info, parsed_toml)
+    # generate_build_rules(builder, project_dir, build_dir, parsed_toml)
 
-    generate_build_rules(builder, project_dir, build_dir, parsed_toml)
+        if frontend == "msvc":
+            builder = msvcbuilds.MSVCBuilds(compiler_cpp,
+                                            compiler_c,
+                                            archiver)
+        elif frontend == "osx":
+            osx_build(tc, build_info, parsed_toml)
+        else:
+            builder = gccbuilds.GCCBuilds(compiler_cpp,
+                                          compiler_c,
+                                          archiver)
 
 
 def entry():
