@@ -5,21 +5,10 @@ import toml
 
 from aim import gccbuilds
 from aim import msvcbuilds
+from aim import osxbuilds
 from aim.schema import target_schema
 from aim.utils import *
 from aim.version import __version__
-
-
-def generate_build_rules(builder, project_dir, build_dir, parsed_toml):
-    flags = parsed_toml.get("flags", [])
-    defines = parsed_toml.get("defines", [])
-    builds = parsed_toml["builds"]
-    for build_info in builds:
-        build_info["directory"] = project_dir
-        build_info["build_dir"] = build_dir
-        build_info["flags"] = flags
-        build_info["defines"] = defines
-        builder.build(build_info, parsed_toml)
 
 
 def find_build(build_name, builds):
@@ -42,22 +31,41 @@ def run_ninja(working_dir, build_name):
         print(result.stderr.decode("utf-8"))
 
 
+from aim.toolchain import ToolChain
+from aim.osxbuilds import build as osx_build
+
+
 def parse_toml_file(parsed_toml, project_dir: Path, build_dir: Path):
     compiler_c = parsed_toml["cc"]
     compiler_cpp = parsed_toml["cxx"]
     archiver = parsed_toml["ar"]
     frontend = parsed_toml["compilerFrontend"]
+    tc = ToolChain(compiler_cpp, compiler_c, archiver)
 
-    if frontend == "msvc":
-        builder = msvcbuilds.MSVCBuilds(compiler_cpp,
-                                        compiler_c,
-                                        archiver)
-    else:
-        builder = gccbuilds.GCCBuilds(compiler_cpp,
-                                      compiler_c,
-                                      archiver)
+    flags = parsed_toml.get("flags", [])
+    defines = parsed_toml.get("defines", [])
+    builds = parsed_toml["builds"]
+    for build_info in builds:
+        build_info["directory"] = project_dir
+        build_info["build_dir"] = build_dir
+        build_info["flags"] = flags
+        build_info["defines"] = defines
 
-    generate_build_rules(builder, project_dir, build_dir, parsed_toml)
+    # generate_build_rules(builder, project_dir, build_dir, parsed_toml)
+
+        if frontend == "msvc":
+            builder = msvcbuilds.MSVCBuilds(compiler_cpp,
+                                            compiler_c,
+                                            archiver)
+            builder.build(build_info, parsed_toml)
+        elif frontend == "osx":
+            osx_build(tc, build_info, parsed_toml)
+        else:
+
+            builder = gccbuilds.GCCBuilds(compiler_cpp,
+                                          compiler_c,
+                                          archiver)
+            builder.build(build_info, parsed_toml)
 
 
 def entry():
@@ -145,14 +153,14 @@ defines = []
 [[builds]]                              # a list of builds.
     name = "lib_calculator"             # the unique name for this build.
     buildRule = "staticlib"             # the type of build, in this case create a static library.
-    outputName = "libCalculator.a"      # the library output name,
+    outputName = "Calculator"      # the library output name,
     srcDirs = ["lib"]                   # the src directories  to build the static library from.
     includePaths = ["include"]    # additional include paths to use during the build.
 
 #[[builds]]
 #    name = "lib_calculator_so"         # the unique name for this build.
 #    buildRule = "dynamiclib"           # the type of build, in this case create a shared library.
-#    outputName = "libCalculator.so"    # the library output name,
+#    outputName = "Calculator"    # the library output name,
 #    srcDirs = ["lib"]                  # the src directories to build the shared library from.
 #    includePaths = ["include"]         # additional include paths to use during the build.
 
@@ -160,7 +168,7 @@ defines = []
     name = "exe"                        # the unique name for this build.
     buildRule = "exe"                   # the type of build, in this case an executable.
     requires = ["lib_calculator"]       # build dependencies. Aim figures out the linker flags for you.
-    outputName = "the_calculator.exe"   # the exe output name,
+    outputName = "the_calculator"   # the exe output name,
     srcDirs = ["src"]                   # the src directories to build the shared library from.
     includePaths = ["include"]          # additional include paths to use during the build.
     #libraryPaths = []                   # additional library paths, used for including third party libraries.

@@ -1,7 +1,7 @@
 cxx = "clang++"
 cc = "clang"
 ar = "ar"
-compilerFrontend="gcc"
+compilerFrontend="osx"
 
 flags = [
     "-std=c++17",
@@ -14,14 +14,14 @@ projectRoot = ".."
 [[builds]]
     name = "static"
     buildRule = "staticlib"
-    outputName = "Calculator"
+    outputName = "project.a"
     srcDirs = ["libproject"]
     includePaths = ["libproject"]
 
 [[builds]]
     name = "shared"
     buildRule = "dynamiclib"
-    outputName = "Calculator"
+    outputName = "libProject.dylib"
     srcDirs = ["libproject"]
     includePaths = ["libproject"]
 
@@ -29,6 +29,6 @@ projectRoot = ".."
     name = "exe"
     requires = ["shared"]
     buildRule = "exe"
-    outputName = "Project"
+    outputName = "project.exe"
     srcDirs = ["app"]
     includePaths = ["libproject"]

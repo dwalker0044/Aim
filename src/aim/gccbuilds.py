@@ -5,7 +5,7 @@ from aim.utils import *
 
 PrefixIncludePath = functools.partial(prefix, "-I")
 PrefixLibraryPath = functools.partial(prefix, "-L")
-PrefixLibrary = functools.partial(prefix, "-l:")
+PrefixLibrary = functools.partial(prefix, "-l")
 ToObjectFiles = src_to_o
 
 
@@ -56,15 +56,17 @@ def get_required_library_information(build, parsed_toml):
 
     library_names = []
     library_paths = []
+    library_types = []
     for required in requires:
         the_dep = find_build(required, parsed_toml["builds"])
+        library_types.append(the_dep["buildRule"])
         library_names.append(the_dep["outputName"])
         dep_name = the_dep["name"]
         library_paths.append(dep_name)
 
     library_paths = prepend_paths(build["build_dir"], library_paths)
     library_paths = PrefixLibraryPath(library_paths)
-    return library_names, PrefixLibrary(library_names), library_paths
+    return library_names, PrefixLibrary(library_names), library_paths, library_types
 
 
 def get_rpath(build: Dict, parsed_toml: Dict):
@@ -88,6 +90,19 @@ def get_rpath(build: Dict, parsed_toml: Dict):
 
     relative_paths_string = escape_path(":".join(relative_paths))
     return f"-Wl,-rpath='{relative_paths_string}'"
+
+
+# TODO: These should take version strings as well.
+def add_static_library_naming_convention(library_name):
+    return f"lib{library_name}.a"
+
+
+def add_dynamic_library_naming_convention(library_name):
+    return f"lib{library_name}.so"
+
+
+def add_exe_naming_convention(exe_name):
+    return f"{exe_name}.exe"
 
 
 class GCCBuilds:
@@ -168,13 +183,13 @@ class GCCBuilds:
 
     def build_static_library(self, nfw: Writer, build: Dict):
         # build_name = build["name"]
-        library_name = build["outputName"]
+        library_name = add_static_library_naming_convention(build["outputName"])
 
         obj_files = self.add_compile_rule(nfw, build)
         build_path = build["buildPath"]
-        output_name = str(build_path / library_name)
+        relative_output_name = str(build_path / library_name)
 
-        nfw.build(outputs=output_name,
+        nfw.build(outputs=relative_output_name,
                   rule="archive",
                   inputs=to_str(obj_files),
                   variables={
@@ -183,13 +198,13 @@ class GCCBuilds:
         nfw.newline()
 
         nfw.build(rule="phony",
-                  inputs=output_name,
+                  inputs=relative_output_name,
                   outputs=library_name)
         nfw.newline()
 
     def build_executable(self, nfw, build: Dict, parsed_toml: Dict):
         build_name = build["name"]
-        exe_name = build["outputName"]
+        exe_name = add_exe_naming_convention(build["outputName"])
         cxxflags = build["flags"]
         defines = build["defines"]
         requires = build.get("requires", [])
@@ -197,7 +212,7 @@ class GCCBuilds:
 
         includes = get_include_paths(build)
         library_paths = get_library_paths(build)
-        requires_libraries, requires_link_libraries, requires_library_paths = \
+        requires_libraries, requires_link_libraries, requires_library_paths, requires_library_types = \
             get_required_library_information(build, parsed_toml)
         libraries, link_libraries = get_library_information(build)
 
@@ -212,10 +227,20 @@ class GCCBuilds:
 
         obj_files = self.add_compile_rule(nfw, build)
 
+        # Here we just need to manage the fact that the linker's library flag (-l) needs the library name without
+        # lib .a/.so but the build dependency rule does need the full convention to find the build rule in the library's
+        # build.ninja file.
+        full_library_names = []
+        for name, build_type in zip(requires_libraries, requires_library_types):
+            if build_type == "staticlib":
+                full_library_names.append(add_static_library_naming_convention(name))
+            else:
+                full_library_names.append(add_dynamic_library_naming_convention(name))
+
         nfw.build(outputs=exe_name,
                   rule="exe",
                   inputs=to_str(obj_files),
-                  implicit=requires_libraries,
+                  implicit=full_library_names,
                   variables={
                       "compiler": self.cxx_compiler,
                       "includes": includes,
@@ -233,40 +258,40 @@ class GCCBuilds:
 
     def build_dynamic_library(self, nfw, build: Dict, parsed_toml: Dict):
         # build_name = build["name"]
-        lib_name = build["outputName"]
+        library_name = add_dynamic_library_naming_convention(build["outputName"])
         cxxflags = build["flags"]
         defines = build["defines"]
 
         includes = get_include_paths(build)
         library_paths = get_library_paths(build)
 
-        requires_libraries, requires_link_libraries, requires_library_oaths = \
+        requires_libraries, requires_link_libraries, requires_library_paths = \
             get_required_library_information(build, parsed_toml)
         libraries, link_libraries = get_library_information(build)
 
-        linker_args = requires_link_libraries + requires_library_oaths + library_paths + link_libraries
+        linker_args = requires_link_libraries + requires_library_paths + library_paths + link_libraries
 
         obj_files = self.add_compile_rule(nfw, build)
 
         build_path = build["buildPath"]
-        output_name = str(build_path / lib_name)
+        relative_output_name = str(build_path / library_name)
         nfw.build(rule="shared",
                   inputs=to_str(obj_files),
                   implicit=requires_libraries,
-                  outputs=output_name,
+                  outputs=relative_output_name,
                   variables={
                       "compiler": self.cxx_compiler,
                       "includes": includes,
                       "flags": " ".join(cxxflags),
                       "defines": " ".join(defines),
-                      "lib_name": lib_name,
+                      "lib_name": library_name,
                       "linker_args": " ".join(linker_args)
                   })
         nfw.newline()
 
         nfw.build(rule="phony",
-                  inputs=output_name,
-                  outputs=lib_name)
+                  inputs=relative_output_name,
+                  outputs=library_name)
 
         nfw.newline()
 
