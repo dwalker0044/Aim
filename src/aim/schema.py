@@ -1,7 +1,5 @@
 import cerberus
 
-from pathlib import Path
-
 
 class UniqueNameChecker:
     def __init__(self):
@@ -40,8 +38,39 @@ class DirectoriesExistsChecker:
                 error(field, f"{str(directory)} does not exist.")
                 break
             if not directory.is_dir():
-                error(f"{str(directory)} is not a dir.")
+                error(field, f"{str(directory)} is not a dir.")
                 break
+
+
+from pathlib import Path
+
+
+class AimCustomValidator(cerberus.Validator):
+    def _check_with_output_naming_convention(self, field, value: str):
+        errors = []
+
+        # if you need more context then you can get it using the line below.
+        # if self.document["buildRule"] in ["staticlib", "dynamiclib"]:
+
+        # TODO: should we also check that the names are camelCase?
+        # TODO: check outputNames are unique to prevent dependency cycle.
+
+        if value.startswith("lib"):
+            error_str = "You should not prefix output names with 'lib'"
+            errors.append(error_str)
+
+        suffix = Path(value).suffix
+        if suffix:
+            error_str = f"You should not specify the suffix."
+            errors.append(error_str)
+
+        if errors:
+            plural = ""
+            if len(errors) > 1:
+                plural = "s"
+
+            error_str = f"Output naming convention error{plural}: {value}. " + " ".join(errors)
+            self._error(field, error_str)
 
 
 def target_schema(document, project_dir):
@@ -103,7 +132,8 @@ def target_schema(document, project_dir):
 
                     "outputName": {
                         "required": True,
-                        "type": "string"
+                        "type": "string",
+                        "check_with": "output_naming_convention",
                     },
 
                     "srcDirs": {
@@ -144,9 +174,9 @@ def target_schema(document, project_dir):
         }
     }
 
-    validator = cerberus.Validator()
+    validator = AimCustomValidator()
     validator.validate(document, schema)
 
-    # TODO: Handle schema errors.
+    # TODO: Handle schema errors. https://docs.python-cerberus.org/en/stable/errors.html
     if validator.errors:
         raise RuntimeError(validator.errors)
