@@ -22,7 +22,7 @@ def find_build(build_name, builds):
 def run_ninja(working_dir, build_name):
     command = ["ninja", f"-C{build_name}", build_name]
     command_str = " ".join(command)
-    print(f"Executing \"{command_str}\"")
+    print(f'Executing "{command_str}"')
     # TODO IMPROVEMENT - we should poll the output of ninja.
     result = subprocess.run(command, cwd=str(working_dir), capture_output=True)
     if result.stdout:
@@ -31,16 +31,11 @@ def run_ninja(working_dir, build_name):
         print(result.stderr.decode("utf-8"))
 
 
-from aim.toolchain import ToolChain
-from aim.osxbuilds import build as osx_build
-
-
 def parse_toml_file(parsed_toml, project_dir: Path, build_dir: Path):
     compiler_c = parsed_toml["cc"]
     compiler_cpp = parsed_toml["cxx"]
     archiver = parsed_toml["ar"]
     frontend = parsed_toml["compilerFrontend"]
-    tc = ToolChain(compiler_cpp, compiler_c, archiver)
 
     flags = parsed_toml.get("flags", [])
     defines = parsed_toml.get("defines", [])
@@ -51,21 +46,16 @@ def parse_toml_file(parsed_toml, project_dir: Path, build_dir: Path):
         build_info["flags"] = flags
         build_info["defines"] = defines
 
-    # generate_build_rules(builder, project_dir, build_dir, parsed_toml)
+        # generate_build_rules(builder, project_dir, build_dir, parsed_toml)
 
         if frontend == "msvc":
-            builder = msvcbuilds.MSVCBuilds(compiler_cpp,
-                                            compiler_c,
-                                            archiver)
-            builder.build(build_info, parsed_toml)
+            builder = msvcbuilds.MSVCBuilds(compiler_cpp, compiler_c, archiver)
         elif frontend == "osx":
-            osx_build(tc, build_info, parsed_toml)
+            builder = osxbuilds.OsxBuilds(compiler_cpp, compiler_c, archiver)
         else:
+            builder = gccbuilds.GCCBuilds(compiler_cpp, compiler_c, archiver)
 
-            builder = gccbuilds.GCCBuilds(compiler_cpp,
-                                          compiler_c,
-                                          archiver)
-            builder.build(build_info, parsed_toml)
+        builder.build(build_info, parsed_toml)
 
 
 def entry():
@@ -77,14 +67,11 @@ def entry():
     init_parser = sub_parser.add_parser("init", help="Initialise the current directory")
 
     build_parser = sub_parser.add_parser("build", help="The build name")
-    build_parser.add_argument('--target',
-                              type=str,
-                              required=True,
-                              help='The build target name')
+    build_parser.add_argument(
+        "--target", type=str, required=True, help="The build target name"
+    )
 
-    build_parser.add_argument('--path',
-                              type=str,
-                              help='Path to target directory')
+    build_parser.add_argument("--path", type=str, help="Path to target directory")
 
     args = parser.parse_args()
     mode = args.command
@@ -94,6 +81,7 @@ def entry():
         run_build(args.target, args.path)
     else:
         import sys
+
         parser.print_help(sys.stdout)
 
 
@@ -220,10 +208,7 @@ def run_init():
         "windows-clang_cl-release",
     ]
 
-    linux_targets = [
-        "linux-clang++-debug",
-        "linux-clang++-release"
-    ]
+    linux_targets = ["linux-clang++-debug", "linux-clang++-release"]
 
     print("Creating common build targets...")
     build_dir = project_dir / "builds"
@@ -291,5 +276,5 @@ def run_build(build_name, target_path):
         run_ninja(build_dir, the_build["name"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     entry()

@@ -1,53 +1,34 @@
-import functools
-from aim.toolchain import ToolChain
-
-from aim.gccbuildrules import *
-from aim.utils import *
-
-PrefixIncludePath = functools.partial(prefix, "-I")
-PrefixLibraryPath = functools.partial(prefix, "-L")
-PrefixLibrary = functools.partial(prefix, "-l")
-ToObjectFiles = src_to_o
+from typing import Dict
+from pathlib import Path
+from aim.utils import prepend_paths, relpath, escape_path
+from aim.gccbuilds import GCCBuilds
+from aim.gccbuilds import find_build, PrefixLibraryPath, PrefixLibrary
+from aim.osxbuildrules import *
 
 
-def get_src_files(build):
-    directory = build["directory"]
-    src_dirs = build["srcDirs"]
-    src_paths = prepend_paths(directory, src_dirs)
-    src_files = flatten(glob("*.cpp", src_paths))
-    assert src_files, f"Fail to find any source files in {to_str(src_paths)}."
-    return src_files
+def get_rpath(build: Dict, parsed_toml: Dict):
+    # Good blog post about rpath:
+    # https://medium.com/@nehckl0/creating-relocatable-linux-executables-by-setting-rpath-with-origin-45de573a2e98
+    requires = build.get("requires", [])
+    library_paths = []
 
+    for required in requires:
+        the_dep = find_build(required, parsed_toml["builds"])
+        if the_dep["buildRule"] == "dynamiclib":
+            library_paths.append(the_dep["name"])
 
-def get_include_paths(build):
-    directory = build["directory"]
-    include_paths = build.get("includePaths", [])
-    includes = prepend_paths(directory, include_paths)
-    includes = PrefixIncludePath(includes)
-    return includes
+    build_dir = Path(build["build_dir"]).resolve()
+    current_build_dir = build_dir / build["name"]
+    library_paths = prepend_paths(build_dir, library_paths)
+    relative_paths = [
+        relpath(Path(lib_path), current_build_dir) for lib_path in library_paths
+    ]
 
+    relative_paths = [f"@executable_path/{rel_path}" for rel_path in relative_paths]
+    relative_paths = ["@executable_path"] + relative_paths
 
-def get_library_paths(build):
-    directory = build["build_dir"]
-    library_paths = build.get("libraryPaths", [])
-    library_paths = prepend_paths(directory, library_paths)
-    library_paths = PrefixLibraryPath(library_paths)
-    return library_paths
-
-
-def get_library_information(build):
-    libraries = build.get("libraries", [])
-    link_libraries = PrefixLibrary(libraries)
-    return libraries, link_libraries
-
-
-# TODO: Code duplication.
-def find_build(build_name, builds):
-    for build in builds:
-        if build["name"] == build_name:
-            return build
-    else:
-        raise RuntimeError(f"Failed to find build with name: {build_name}")
+    relative_paths_string = escape_path(":".join(relative_paths))
+    return f"-rpath '{relative_paths_string}'"
 
 
 def get_required_library_information(build, parsed_toml):
@@ -71,245 +52,32 @@ def get_required_library_information(build, parsed_toml):
     return library_names, PrefixLibrary(library_names), library_paths
 
 
-def get_rpath(build: Dict, parsed_toml: Dict):
-    # Good blog post about rpath:
-    # https://medium.com/@nehckl0/creating-relocatable-linux-executables-by-setting-rpath-with-origin-45de573a2e98
-    requires = build.get("requires", [])
-    library_paths = []
+class OsxBuilds(GCCBuilds):
+    def __init__(self, cxx_compiler, c_compiler, archiver):
+        super().__init__(cxx_compiler, c_compiler, archiver)
 
-    for required in requires:
-        the_dep = find_build(required, parsed_toml["builds"])
-        if the_dep["buildRule"] == "dynamiclib":
-            library_paths.append(the_dep["name"])
+    def add_rules(self, build):
+        directory = build["build_dir"]
+        ninja_path = directory / "rules.ninja"
+        with ninja_path.open("w+") as ninja_file:
+            writer = Writer(ninja_file)
+            add_compile(writer)
+            add_ar(writer)
+            add_exe(writer)
+            add_shared(writer)
 
-    build_dir = Path(build["build_dir"]).resolve()
-    current_build_dir = build_dir / build["name"]
-    library_paths = prepend_paths(build_dir, library_paths)
-    relative_paths = [relpath(Path(lib_path), current_build_dir) for lib_path in library_paths]
+    def get_required_library_information(self, build, parsed_toml):
+        return get_required_library_information(build, parsed_toml)
 
-    relative_paths = [f"@executable_path/{rel_path}" for rel_path in relative_paths]
-    relative_paths = ["@executable_path"] + relative_paths
+    def get_rpath(self, build: Dict, parsed_toml: Dict):
+        return get_rpath(build, parsed_toml)
 
-    relative_paths_string = escape_path(":".join(relative_paths))
-    return f"-rpath '{relative_paths_string}'"
+    # TODO: These should take version strings as well.
+    def add_static_library_naming_convention(self, library_name):
+        return f"lib{library_name}.a"
 
+    def add_dynamic_library_naming_convention(self, library_name):
+        return f"lib{library_name}.dylib"
 
-# TODO: These should take version strings as well.
-def add_static_library_naming_convention(library_name):
-    return f"lib{library_name}.a"
-
-
-def add_dynamic_library_naming_convention(library_name):
-    return f"lib{library_name}.so"
-
-
-def add_exe_naming_convention(exe_name):
-    return f"{exe_name}.exe"
-
-
-def add_rules(build):
-    directory = build["build_dir"]
-    ninja_path = directory / "rules.ninja"
-    with ninja_path.open("w+") as ninja_file:
-        writer = Writer(ninja_file)
-        add_compile(writer)
-        add_ar(writer)
-        add_exe(writer)
-        add_shared(writer)
-
-
-def build(tc: ToolChain, build, parsed_toml):
-    the_build = build["buildRule"]
-
-    build_name = build["name"]
-    project_dir = build["directory"]
-    build_dir = build["build_dir"]
-
-    build_path = build_dir / build_name
-    build_path.mkdir(parents=True, exist_ok=True)
-
-    ninja_path = build_path / "build.ninja"
-    build["buildPath"] = build_path
-
-    add_rules(build)
-
-    with ninja_path.open("w+") as ninja_file:
-        ninja_writer = Writer(ninja_file)
-        rule_path = (build_dir / "rules.ninja").resolve()
-        ninja_writer.include(escape_path(str(rule_path)))
-        ninja_writer.newline()
-
-        if the_build == "staticlib":
-            build_static_library(tc, ninja_writer, build)
-        elif the_build == "exe":
-            build_executable(tc, ninja_writer, build, parsed_toml)
-        elif the_build == "dynamiclib":
-            build_dynamic_library(tc, ninja_writer, build, parsed_toml)
-        else:
-            raise RuntimeError(f"Unknown build type {the_build}.")
-
-
-def add_compile_rule(tc: ToolChain, nfw: Writer, build: Dict):
-    cxxflags = build["flags"]
-    defines = build["defines"]
-
-    src_files = get_src_files(build)
-    includes = get_include_paths(build)
-
-    # Its very important to specify the absolute path to the obj files.
-    # This prevents recompilation of files when an exe links against a library.
-    # Without the absolute path to the obj files, it would build the files again
-    # in the current (exe's) build location.
-    build_path = build["buildPath"]
-    obj_files = ToObjectFiles(src_files)
-    obj_files = prepend_paths(build_path, obj_files)
-
-    file_pairs = zip(to_str(src_files), to_str(obj_files))
-    for src_file, obj_file in file_pairs:
-        nfw.build(outputs=obj_file,
-                  rule="compile",
-                  inputs=src_file,
-                  variables={
-                      "compiler": tc.cxx_compiler,
-                      "includes": includes,
-                      "flags": cxxflags,
-                      "defines": defines
-                  })
-        nfw.newline()
-
-    return obj_files
-
-
-def build_static_library(tc: ToolChain, nfw: Writer, build: Dict):
-    # build_name = build["name"]
-    library_name = add_static_library_naming_convention(build["outputName"])
-
-    obj_files = add_compile_rule(tc, nfw, build)
-    build_path = build["buildPath"]
-    relative_output_name = str(build_path / library_name)
-
-    nfw.build(outputs=relative_output_name,
-              rule="archive",
-              inputs=to_str(obj_files),
-              variables={
-                  "archiver": tc.archiver
-              })
-    nfw.newline()
-
-    nfw.build(rule="phony",
-              inputs=relative_output_name,
-              outputs=library_name)
-    nfw.newline()
-
-
-def build_executable(tc: ToolChain, nfw, build: Dict, parsed_toml: Dict):
-    build_name = build["name"]
-    exe_name = build["outputName"]
-    cxxflags = build["flags"]
-    defines = build["defines"]
-    requires = build.get("requires", [])
-    build_path = build["buildPath"]
-
-    includes = get_include_paths(build)
-    library_paths = get_library_paths(build)
-    requires_libraries, requires_link_libraries, requires_library_paths, requires_library_types = \
-        get_required_library_information(build, parsed_toml)
-    libraries, link_libraries = get_library_information(build)
-
-    rpath = get_rpath(build, parsed_toml)
-    linker_args = [rpath] + requires_library_paths + requires_link_libraries + library_paths + link_libraries
-
-    for requirement in requires:
-        ninja_file = (build_path.parent / requirement / "build.ninja").resolve()
-        assert ninja_file.exists(), f"Failed to find {str(ninja_file)}."
-        nfw.subninja(escape_path(str(ninja_file)))
-        nfw.newline()
-
-    obj_files = add_compile_rule(tc, nfw, build)
-
-    # Here we just need to manage the fact that the linker's library flag (-l) needs the library name without
-    # lib .a/.so but the build dependency rule does need the full convention to find the build rule in the library's
-    # build.ninja file.
-    full_library_names = []
-    for name, build_type in zip(requires_libraries, requires_library_types):
-        if build_type == "staticlib":
-            full_library_names.append(add_static_library_naming_convention(name))
-        else:
-            full_library_names.append(add_dynamic_library_naming_convention(name))
-
-    nfw.build(outputs=exe_name,
-              rule="exe",
-              inputs=to_str(obj_files),
-              implicit=full_library_names,
-              variables={
-                  "compiler": tc.cxx_compiler,
-                  "includes": includes,
-                  "flags": cxxflags,
-                  "defines": defines,
-                  "exe_name": exe_name,
-                  "linker_args": " ".join(linker_args)
-              })
-    nfw.newline()
-
-    nfw.build(rule="phony",
-              inputs=exe_name,
-              outputs=build_name)
-    nfw.newline()
-
-
-def build_dynamic_library(tc: ToolChain, nfw, build: Dict, parsed_toml: Dict):
-    # build_name = build["name"]
-    library_name = add_dynamic_library_naming_convention(build["outputName"])
-    cxxflags = build["flags"]
-    defines = build["defines"]
-
-    includes = get_include_paths(build)
-    library_paths = get_library_paths(build)
-
-    requires_libraries, requires_link_libraries, requires_library_paths = \
-        get_required_library_information(build, parsed_toml)
-    libraries, link_libraries = get_library_information(build)
-
-    linker_args = requires_link_libraries + requires_library_paths + library_paths + link_libraries
-
-    obj_files = add_compile_rule(tc, nfw, build)
-
-    build_path = build["buildPath"]
-    relative_output_name = str(build_path / library_name)
-    nfw.build(rule="shared",
-              inputs=to_str(obj_files),
-              implicit=requires_libraries,
-              outputs=relative_output_name,
-              variables={
-                  "compiler": tc.cxx_compiler,
-                  "includes": includes,
-                  "flags": " ".join(cxxflags),
-                  "defines": " ".join(defines),
-                  "lib_name": library_name,
-                  "linker_args": " ".join(linker_args)
-              })
-    nfw.newline()
-
-    # TODO need to fix how library names are handled.
-    nfw.build(rule="phony",
-              inputs=relative_output_name,
-              outputs=library_name)
-
-    nfw.newline()
-
-
-def log_build_information(build):
-    build_name = build["name"]
-    cxxflags = build["flags"]
-    defines = build["defines"]
-    includes = build["includes"]
-    library_paths = build["libraryPaths"]
-    output = build["outputName"]
-
-    print(f"Running build: f{build_name}")
-    print(f"CXXFLAGS: {cxxflags}")
-    print(f"DEFINES: {defines}")
-    print(f"INCLUDE_PATHS: {includes}")
-    print(f"LIBRARY_PATHS: {library_paths}")
-    print(f"OUTPUT NAME: {output}")
-    print("")
+    def add_exe_naming_convention(self, exe_name):
+        return f"{exe_name}.exe"

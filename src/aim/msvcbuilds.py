@@ -1,5 +1,5 @@
 import functools
-
+from typing import Dict
 from ninja_syntax import Writer
 
 from aim.msvcbuildrules import *
@@ -146,15 +146,17 @@ class MSVCBuilds:
 
         file_pairs = zip(to_str(src_files), to_str(obj_files))
         for src_file, obj_file in file_pairs:
-            nfw.build(outputs=obj_file,
-                      rule="compile",
-                      inputs=src_file,
-                      variables={
-                          "compiler": self.cxx_compiler,
-                          "includes": includes,
-                          "flags": cxxflags,
-                          "defines": defines
-                      })
+            nfw.build(
+                outputs=obj_file,
+                rule="compile",
+                inputs=src_file,
+                variables={
+                    "compiler": self.cxx_compiler,
+                    "includes": includes,
+                    "flags": cxxflags,
+                    "defines": defines,
+                },
+            )
             nfw.newline()
 
         return obj_files
@@ -165,14 +167,10 @@ class MSVCBuilds:
 
         obj_files = self.add_compile_rule(nfw, build)
 
-        nfw.build(outputs=library_name,
-                  rule="ar",
-                  inputs=to_str(obj_files))
+        nfw.build(outputs=library_name, rule="ar", inputs=to_str(obj_files))
         nfw.newline()
 
-        nfw.build(rule="phony",
-                  inputs=library_name,
-                  outputs=build_name)
+        nfw.build(rule="phony", inputs=library_name, outputs=build_name)
         nfw.newline()
 
     def build_executable(self, nfw, build: Dict):
@@ -198,23 +196,23 @@ class MSVCBuilds:
 
         obj_files = self.add_compile_rule(nfw, build)
 
-        nfw.build(outputs=exe_name,
-                  rule="exe",
-                  inputs=to_str(obj_files),
-                  implicit=implicits,
-                  variables={
-                      "compiler": self.cxx_compiler,
-                      "includes": includes,
-                      "flags": cxxflags,
-                      "defines": defines,
-                      "exe_name": exe_name,
-                      "linker_args": " ".join(linker_args)
-                  })
+        nfw.build(
+            outputs=exe_name,
+            rule="exe",
+            inputs=to_str(obj_files),
+            implicit=implicits,
+            variables={
+                "compiler": self.cxx_compiler,
+                "includes": includes,
+                "flags": cxxflags,
+                "defines": defines,
+                "exe_name": exe_name,
+                "linker_args": " ".join(linker_args),
+            },
+        )
         nfw.newline()
 
-        nfw.build(rule="phony",
-                  inputs=exe_name,
-                  outputs=build_name)
+        nfw.build(rule="phony", inputs=exe_name, outputs=build_name)
         nfw.newline()
 
     def build_dynamic_library(self, nfw, build: Dict):
@@ -233,24 +231,24 @@ class MSVCBuilds:
 
         obj_files = self.add_compile_rule(nfw, build)
 
-        nfw.build(rule="shared",
-                  inputs=to_str(obj_files),
-                  outputs=lib_name,
-                  implicit=implicits,
-                  implicit_outputs=implicit_outputs,
-                  variables={
-                      "compiler": self.cxx_compiler,
-                      "includes": includes,
-                      "flags": " ".join(cxxflags),
-                      "defines": " ".join(defines),
-                      "lib_name": lib_name,
-                      "linker_args": " ".join(linker_args)
-                  })
+        nfw.build(
+            rule="shared",
+            inputs=to_str(obj_files),
+            outputs=lib_name,
+            implicit=implicits,
+            implicit_outputs=implicit_outputs,
+            variables={
+                "compiler": self.cxx_compiler,
+                "includes": includes,
+                "flags": " ".join(cxxflags),
+                "defines": " ".join(defines),
+                "lib_name": lib_name,
+                "linker_args": " ".join(linker_args),
+            },
+        )
         nfw.newline()
 
-        nfw.build(rule="phony",
-                  inputs=lib_name,
-                  outputs=build_name)
+        nfw.build(rule="phony", inputs=lib_name, outputs=build_name)
         nfw.newline()
 
 

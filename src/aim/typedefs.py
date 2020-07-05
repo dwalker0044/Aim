@@ -8,4 +8,4 @@ PathList = List[Path]
 
 # A type variable so function types can vary.
 #
-T = TypeVar('T')
+T = TypeVar("T")
