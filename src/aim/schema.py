@@ -7,7 +7,10 @@ class UniqueNameChecker:
 
     def check(self, field, value, error):
         if value in self.name_lookup:
-            error(field, f"The name field must be unique. The name {value} has already been used.")
+            error(
+                field,
+                f"The name field must be unique. The name {value} has already been used.",
+            )
         else:
             self.name_lookup.append(value)
 
@@ -69,7 +72,9 @@ class AimCustomValidator(cerberus.Validator):
             if len(errors) > 1:
                 plural = "s"
 
-            error_str = f"Output naming convention error{plural}: {value}. " + " ".join(errors)
+            error_str = f"Output naming convention error{plural}: {value}. " + " ".join(
+                errors
+            )
             self._error(field, error_str)
 
 
@@ -82,29 +87,14 @@ def target_schema(document, project_dir):
         "cxx": {"required": True, "type": "string"},
         "cc": {"required": True, "type": "string"},
         "ar": {"required": True, "type": "string"},
-
         "compilerFrontend": {
             "required": True,
             "type": "string",
-            "allowed": ["msvc", "gcc", "osx"]
+            "allowed": ["msvc", "gcc", "osx"],
         },
-
-        "flags": {
-            "type": "list",
-            "schema": {"type": "string"}
-        },
-
-        "defines": {
-            "type": "list",
-            "schema": {"type": "string"}
-        },
-
-        "projectRoot": {
-            "required": True,
-            "type": "string",
-            "empty": False
-        },
-
+        "flags": {"type": "list", "schema": {"type": "string"}},
+        "defines": {"type": "list", "schema": {"type": "string"}},
+        "projectRoot": {"required": True, "type": "string", "empty": False},
         "builds": {
             "required": True,
             "type": "list",
@@ -114,28 +104,24 @@ def target_schema(document, project_dir):
                     "name": {
                         "required": True,
                         "type": "string",
-                        "check_with": unique_name_checker.check
+                        "check_with": unique_name_checker.check,
                     },
-
                     "requires": {
                         "type": "list",
                         "empty": False,
                         "schema": {"type": "string"},
-                        "check_with": requires_exist_checker.check
+                        "check_with": requires_exist_checker.check,
                     },
-
                     "buildRule": {
                         "required": True,
                         "type": "string",
-                        "allowed": ["exe", "staticlib", "dynamiclib"]
+                        "allowed": ["exe", "staticlib", "dynamiclib"],
                     },
-
                     "outputName": {
                         "required": True,
                         "type": "string",
                         "check_with": "output_naming_convention",
                     },
-
                     "srcDirs": {
                         "required": True,
                         "empty": False,
@@ -143,35 +129,28 @@ def target_schema(document, project_dir):
                         "schema": {"type": "string"},
                         "check_with": dir_exists_checker.check,
                     },
-
                     "includePaths": {
                         "type": "list",
                         "empty": False,
                         "schema": {"type": "string"},
                         "check_with": dir_exists_checker.check,
                     },
-
                     "libraryPaths": {
                         "type": "list",
                         "empty": False,
                         "schema": {"type": "string"},
                         "check_with": dir_exists_checker.check,
-                        "dependencies": {
-                            "buildRule": ["exe", "dynamiclib"]
-                        },
+                        "dependencies": {"buildRule": ["exe", "dynamiclib"]},
                     },
-
                     "libraries": {
                         "type": "list",
                         "empty": False,
                         "schema": {"type": "string"},
-                        "dependencies": {
-                            "buildRule": ["exe", "dynamiclib"]
-                        }
+                        "dependencies": {"buildRule": ["exe", "dynamiclib"]},
                     },
-                }
-            }
-        }
+                },
+            },
+        },
     }
 
     validator = AimCustomValidator()

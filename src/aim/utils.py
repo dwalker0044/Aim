@@ -35,7 +35,7 @@ def prefix(the_prefix, paths) -> StringList:
 
 
 def add_quotes(paths: Union[PathList, StringList]):
-    return [f"\"{str(x)}\"" for x in paths]
+    return [f'"{str(x)}"' for x in paths]
 
 
 def suffix(the_suffix, paths) -> StringList:
@@ -53,7 +53,7 @@ def resolve(paths: PathList):
 
 
 def escape_path(word):
-    return word.replace('$ ', '$$ ').replace(' ', '$ ').replace(':', '$:')
+    return word.replace("$ ", "$$ ").replace(" ", "$ ").replace(":", "$:")
 
 
 def relpath(src_path: Path, dst_path: Path):
