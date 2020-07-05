@@ -85,7 +85,9 @@ def get_rpath(build: Dict, parsed_toml: Dict):
     build_dir = Path(build["build_dir"]).resolve()
     current_build_dir = build_dir / build["name"]
     library_paths = prepend_paths(build_dir, library_paths)
-    relative_paths = [relpath(Path(lib_path), current_build_dir) for lib_path in library_paths]
+    relative_paths = [
+        relpath(Path(lib_path), current_build_dir) for lib_path in library_paths
+    ]
 
     relative_paths = [f"@executable_path/{rel_path}" for rel_path in relative_paths]
     relative_paths = ["@executable_path"] + relative_paths
@@ -166,15 +168,17 @@ def add_compile_rule(tc: ToolChain, nfw: Writer, build: Dict):
 
     file_pairs = zip(to_str(src_files), to_str(obj_files))
     for src_file, obj_file in file_pairs:
-        nfw.build(outputs=obj_file,
-                  rule="compile",
-                  inputs=src_file,
-                  variables={
-                      "compiler": tc.cxx_compiler,
-                      "includes": includes,
-                      "flags": cxxflags,
-                      "defines": defines
-                  })
+        nfw.build(
+            outputs=obj_file,
+            rule="compile",
+            inputs=src_file,
+            variables={
+                "compiler": tc.cxx_compiler,
+                "includes": includes,
+                "flags": cxxflags,
+                "defines": defines,
+            },
+        )
         nfw.newline()
 
     return obj_files
@@ -188,17 +192,15 @@ def build_static_library(tc: ToolChain, nfw: Writer, build: Dict):
     build_path = build["buildPath"]
     relative_output_name = str(build_path / library_name)
 
-    nfw.build(outputs=relative_output_name,
-              rule="archive",
-              inputs=to_str(obj_files),
-              variables={
-                  "archiver": tc.archiver
-              })
+    nfw.build(
+        outputs=relative_output_name,
+        rule="archive",
+        inputs=to_str(obj_files),
+        variables={"archiver": tc.archiver},
+    )
     nfw.newline()
 
-    nfw.build(rule="phony",
-              inputs=relative_output_name,
-              outputs=library_name)
+    nfw.build(rule="phony", inputs=relative_output_name, outputs=library_name)
     nfw.newline()
 
 
@@ -212,12 +214,22 @@ def build_executable(tc: ToolChain, nfw, build: Dict, parsed_toml: Dict):
 
     includes = get_include_paths(build)
     library_paths = get_library_paths(build)
-    requires_libraries, requires_link_libraries, requires_library_paths, requires_library_types = \
-        get_required_library_information(build, parsed_toml)
+    (
+        requires_libraries,
+        requires_link_libraries,
+        requires_library_paths,
+        requires_library_types,
+    ) = get_required_library_information(build, parsed_toml)
     libraries, link_libraries = get_library_information(build)
 
     rpath = get_rpath(build, parsed_toml)
-    linker_args = [rpath] + requires_library_paths + requires_link_libraries + library_paths + link_libraries
+    linker_args = (
+        [rpath]
+        + requires_library_paths
+        + requires_link_libraries
+        + library_paths
+        + link_libraries
+    )
 
     for requirement in requires:
         ninja_file = (build_path.parent / requirement / "build.ninja").resolve()
@@ -237,23 +249,23 @@ def build_executable(tc: ToolChain, nfw, build: Dict, parsed_toml: Dict):
         else:
             full_library_names.append(add_dynamic_library_naming_convention(name))
 
-    nfw.build(outputs=exe_name,
-              rule="exe",
-              inputs=to_str(obj_files),
-              implicit=full_library_names,
-              variables={
-                  "compiler": tc.cxx_compiler,
-                  "includes": includes,
-                  "flags": cxxflags,
-                  "defines": defines,
-                  "exe_name": exe_name,
-                  "linker_args": " ".join(linker_args)
-              })
+    nfw.build(
+        outputs=exe_name,
+        rule="exe",
+        inputs=to_str(obj_files),
+        implicit=full_library_names,
+        variables={
+            "compiler": tc.cxx_compiler,
+            "includes": includes,
+            "flags": cxxflags,
+            "defines": defines,
+            "exe_name": exe_name,
+            "linker_args": " ".join(linker_args),
+        },
+    )
     nfw.newline()
 
-    nfw.build(rule="phony",
-              inputs=exe_name,
-              outputs=build_name)
+    nfw.build(rule="phony", inputs=exe_name, outputs=build_name)
     nfw.newline()
 
 
@@ -266,34 +278,42 @@ def build_dynamic_library(tc: ToolChain, nfw, build: Dict, parsed_toml: Dict):
     includes = get_include_paths(build)
     library_paths = get_library_paths(build)
 
-    requires_libraries, requires_link_libraries, requires_library_paths = \
-        get_required_library_information(build, parsed_toml)
+    (
+        requires_libraries,
+        requires_link_libraries,
+        requires_library_paths,
+    ) = get_required_library_information(build, parsed_toml)
     libraries, link_libraries = get_library_information(build)
 
-    linker_args = requires_link_libraries + requires_library_paths + library_paths + link_libraries
+    linker_args = (
+        requires_link_libraries
+        + requires_library_paths
+        + library_paths
+        + link_libraries
+    )
 
     obj_files = add_compile_rule(tc, nfw, build)
 
     build_path = build["buildPath"]
     relative_output_name = str(build_path / library_name)
-    nfw.build(rule="shared",
-              inputs=to_str(obj_files),
-              implicit=requires_libraries,
-              outputs=relative_output_name,
-              variables={
-                  "compiler": tc.cxx_compiler,
-                  "includes": includes,
-                  "flags": " ".join(cxxflags),
-                  "defines": " ".join(defines),
-                  "lib_name": library_name,
-                  "linker_args": " ".join(linker_args)
-              })
+    nfw.build(
+        rule="shared",
+        inputs=to_str(obj_files),
+        implicit=requires_libraries,
+        outputs=relative_output_name,
+        variables={
+            "compiler": tc.cxx_compiler,
+            "includes": includes,
+            "flags": " ".join(cxxflags),
+            "defines": " ".join(defines),
+            "lib_name": library_name,
+            "linker_args": " ".join(linker_args),
+        },
+    )
     nfw.newline()
 
     # TODO need to fix how library names are handled.
-    nfw.build(rule="phony",
-              inputs=relative_output_name,
-              outputs=library_name)
+    nfw.build(rule="phony", inputs=relative_output_name, outputs=library_name)
 
     nfw.newline()
 
