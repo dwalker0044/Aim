@@ -63,12 +63,21 @@ def entry():
     parser.add_argument("-v", "--version", action="version", version=__version__)
     sub_parser = parser.add_subparsers(dest="command", help="Commands")
     init_parser = sub_parser.add_parser("init", help="Initialise the current directory")
+    init_parser.add_argument(
+        "--demo", help="Create additional demo files", action="store_true"
+    )
 
     build_parser = sub_parser.add_parser("build", help="The build name")
     build_parser.add_argument("build", type=str, help="The build name")
 
     build_parser.add_argument(
         "--target", type=str, help="Path to target file directory"
+    )
+
+    build_parser.add_argument(
+        "--skip_ninja_regen",
+        help="By-pass the ninja file generation step",
+        action="store_true",
     )
 
     build_parser = sub_parser.add_parser("list", help="List the builds for the target")
@@ -79,9 +88,9 @@ def entry():
     args = parser.parse_args()
     mode = args.command
     if mode == "init":
-        run_init()
+        run_init(args.demo)
     elif mode == "build":
-        run_build(args.build, args.target)
+        run_build(args.build, args.target, args.skip_ninja_regen)
     elif mode == "list":
         run_list(args.target)
     else:
@@ -199,7 +208,7 @@ int main()
 """
 
 
-def run_init():
+def run_init(add_demo_files):
     project_dir = Path().cwd()
     dirs = ["include", "src", "lib", "builds"]
     dirs = [project_dir / x for x in dirs]
@@ -239,12 +248,13 @@ def run_init():
 
         toml_file.write_text(LinuxDefaultTomlFile)
 
-    (dirs[0] / "calculator.h").write_text(CALCULATOR_H)
-    (dirs[1] / "main.cpp").write_text(MAIN_CPP)
-    (dirs[2] / "calculator.cpp").write_text(CALCULATOR_CPP)
+    if add_demo_files:
+        (dirs[0] / "calculator.h").write_text(CALCULATOR_H)
+        (dirs[1] / "main.cpp").write_text(MAIN_CPP)
+        (dirs[2] / "calculator.cpp").write_text(CALCULATOR_CPP)
 
 
-def run_build(build_name, target_path):
+def run_build(build_name, target_path, skip_ninja_regen):
     build_dir = Path().cwd()
 
     if target_path:
@@ -262,7 +272,6 @@ def run_build(build_name, target_path):
 
         builds = parsed_toml["builds"]
         the_build = find_build(build_name, builds)
-
         root_dir = parsed_toml["projectRoot"]
         project_dir = (build_dir / root_dir).resolve()
         assert project_dir.exists(), f"{str(project_dir)} does not exist."
@@ -272,7 +281,9 @@ def run_build(build_name, target_path):
         except RuntimeError as e:
             print(f"Error: {e.args[0]}")
             exit(-1)
-        run_ninja_generation(parsed_toml, project_dir, build_dir)
+
+        if not skip_ninja_regen:
+            run_ninja_generation(parsed_toml, project_dir, build_dir)
 
         run_ninja(build_dir, the_build["name"])
 
