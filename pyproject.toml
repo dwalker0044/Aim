@@ -1,9 +1,26 @@
 [tool.poetry]
 name = "aim"
-version = "0.1.6"
-description = "Simple C++ build tool."
-authors = ["David Walker <david.walker@email.com>"]
-license = "MIT"
+version = "0.1.8"
+description = "A simple, but easy to use, build tool for C++."
+authors = ["David Walker <diwalkerdev@twitter.com>"]
+license = "MPL 2.0"
+readme = "README.md"
+homepage = "https://github.com/diwalkerdev/Aim"
+repository = "https://github.com/diwalkerdev/Aim"
+keywords = ["cpp", "build-tool", "poetry", "python", "linux", "windows", "macos"]
+include = ["LICENSE"]
+classifiers = [
+	"Development Status :: 3 - Alpha",
+	"Environment :: Console",
+	"Intended Audience :: Developers", 
+	"Intended Audience :: End Users/Desktop",
+	"License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+	"Operating System :: OS Independent",
+	"Programming Language :: Python :: 3.7",
+	"Programming Language :: Python :: 3.8",
+	"Topic :: Software Development :: Build Tools",
+	
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"
