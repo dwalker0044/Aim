@@ -1,7 +1,7 @@
 import itertools
 import os
 from pathlib import Path
-from typing import *
+from typing import List, Union
 
 from aim.typedefs import PathList, StringList, T
 

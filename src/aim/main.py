@@ -31,16 +31,11 @@ def run_ninja(working_dir, build_name):
         print(result.stderr.decode("utf-8"))
 
 
-from aim.toolchain import ToolChain
-from aim.osxbuilds import build as osx_build
-
-
 def parse_toml_file(parsed_toml, project_dir: Path, build_dir: Path):
     compiler_c = parsed_toml["cc"]
     compiler_cpp = parsed_toml["cxx"]
     archiver = parsed_toml["ar"]
     frontend = parsed_toml["compilerFrontend"]
-    tc = ToolChain(compiler_cpp, compiler_c, archiver)
 
     flags = parsed_toml.get("flags", [])
     defines = parsed_toml.get("defines", [])
@@ -55,13 +50,12 @@ def parse_toml_file(parsed_toml, project_dir: Path, build_dir: Path):
 
         if frontend == "msvc":
             builder = msvcbuilds.MSVCBuilds(compiler_cpp, compiler_c, archiver)
-            builder.build(build_info, parsed_toml)
         elif frontend == "osx":
-            osx_build(tc, build_info, parsed_toml)
+            builder = osxbuilds.OsxBuilds(compiler_cpp, compiler_c, archiver)
         else:
-
             builder = gccbuilds.GCCBuilds(compiler_cpp, compiler_c, archiver)
-            builder.build(build_info, parsed_toml)
+
+        builder.build(build_info, parsed_toml)
 
 
 def entry():

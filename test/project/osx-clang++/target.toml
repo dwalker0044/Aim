@@ -14,14 +14,14 @@ projectRoot = ".."
 [[builds]]
     name = "static"
     buildRule = "staticlib"
-    outputName = "project.a"
+    outputName = "calculator"
     srcDirs = ["libproject"]
     includePaths = ["libproject"]
 
 [[builds]]
     name = "shared"
     buildRule = "dynamiclib"
-    outputName = "libProject.dylib"
+    outputName = "calculator"
     srcDirs = ["libproject"]
     includePaths = ["libproject"]
 
@@ -29,6 +29,6 @@ projectRoot = ".."
     name = "exe"
     requires = ["shared"]
     buildRule = "exe"
-    outputName = "project.exe"
+    outputName = "project"
     srcDirs = ["app"]
     includePaths = ["libproject"]

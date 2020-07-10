@@ -1,5 +1,5 @@
 import functools
-
+from typing import Dict
 from aim.gccbuildrules import *
 from aim.utils import *
 
@@ -40,71 +40,12 @@ def get_library_information(build):
     return libraries, link_libraries
 
 
-# TODO: Code duplication.
 def find_build(build_name, builds):
     for build in builds:
         if build["name"] == build_name:
             return build
     else:
         raise RuntimeError(f"Failed to find build with name: {build_name}")
-
-
-def get_required_library_information(build, parsed_toml):
-    requires = build.get("requires", [])
-    if not requires:
-        return [], [], []
-
-    library_names = []
-    library_paths = []
-    library_types = []
-    for required in requires:
-        the_dep = find_build(required, parsed_toml["builds"])
-        library_types.append(the_dep["buildRule"])
-        library_names.append(the_dep["outputName"])
-        dep_name = the_dep["name"]
-        library_paths.append(dep_name)
-
-    library_paths = prepend_paths(build["build_dir"], library_paths)
-    library_paths = PrefixLibraryPath(library_paths)
-    return library_names, PrefixLibrary(library_names), library_paths, library_types
-
-
-def get_rpath(build: Dict, parsed_toml: Dict):
-    # Good blog post about rpath:
-    # https://medium.com/@nehckl0/creating-relocatable-linux-executables-by-setting-rpath-with-origin-45de573a2e98
-    requires = build.get("requires", [])
-    library_paths = []
-
-    for required in requires:
-        the_dep = find_build(required, parsed_toml["builds"])
-        if the_dep["buildRule"] == "dynamiclib":
-            library_paths.append(the_dep["name"])
-
-    build_dir = Path(build["build_dir"]).resolve()
-    current_build_dir = build_dir / build["name"]
-    library_paths = prepend_paths(build_dir, library_paths)
-    relative_paths = [
-        relpath(Path(lib_path), current_build_dir) for lib_path in library_paths
-    ]
-
-    relative_paths = [f"$$ORIGIN/{rel_path}" for rel_path in relative_paths]
-    relative_paths = ["$$ORIGIN"] + relative_paths
-
-    relative_paths_string = escape_path(":".join(relative_paths))
-    return f"-Wl,-rpath='{relative_paths_string}'"
-
-
-# TODO: These should take version strings as well.
-def add_static_library_naming_convention(library_name):
-    return f"lib{library_name}.a"
-
-
-def add_dynamic_library_naming_convention(library_name):
-    return f"lib{library_name}.so"
-
-
-def add_exe_naming_convention(exe_name):
-    return f"{exe_name}.exe"
 
 
 class GCCBuilds:
@@ -187,7 +128,7 @@ class GCCBuilds:
 
     def build_static_library(self, nfw: Writer, build: Dict):
         # build_name = build["name"]
-        library_name = add_static_library_naming_convention(build["outputName"])
+        library_name = self.add_static_library_naming_convention(build["outputName"])
 
         obj_files = self.add_compile_rule(nfw, build)
         build_path = build["buildPath"]
@@ -206,7 +147,7 @@ class GCCBuilds:
 
     def build_executable(self, nfw, build: Dict, parsed_toml: Dict):
         build_name = build["name"]
-        exe_name = add_exe_naming_convention(build["outputName"])
+        exe_name = self.add_exe_naming_convention(build["outputName"])
         cxxflags = build["flags"]
         defines = build["defines"]
         requires = build.get("requires", [])
@@ -219,10 +160,10 @@ class GCCBuilds:
             requires_link_libraries,
             requires_library_paths,
             requires_library_types,
-        ) = get_required_library_information(build, parsed_toml)
+        ) = self.get_required_library_information(build, parsed_toml)
         libraries, link_libraries = get_library_information(build)
 
-        rpath = get_rpath(build, parsed_toml)
+        rpath = self.get_rpath(build, parsed_toml)
         linker_args = (
             [rpath]
             + requires_library_paths
@@ -245,9 +186,13 @@ class GCCBuilds:
         full_library_names = []
         for name, build_type in zip(requires_libraries, requires_library_types):
             if build_type == "staticlib":
-                full_library_names.append(add_static_library_naming_convention(name))
+                full_library_names.append(
+                    self.add_static_library_naming_convention(name)
+                )
             else:
-                full_library_names.append(add_dynamic_library_naming_convention(name))
+                full_library_names.append(
+                    self.add_dynamic_library_naming_convention(name)
+                )
 
         nfw.build(
             outputs=exe_name,
@@ -270,7 +215,7 @@ class GCCBuilds:
 
     def build_dynamic_library(self, nfw, build: Dict, parsed_toml: Dict):
         # build_name = build["name"]
-        library_name = add_dynamic_library_naming_convention(build["outputName"])
+        library_name = self.add_dynamic_library_naming_convention(build["outputName"])
         cxxflags = build["flags"]
         defines = build["defines"]
 
@@ -281,7 +226,7 @@ class GCCBuilds:
             requires_libraries,
             requires_link_libraries,
             requires_library_paths,
-        ) = get_required_library_information(build, parsed_toml)
+        ) = self.get_required_library_information(build, parsed_toml)
         libraries, link_libraries = get_library_information(build)
 
         linker_args = (
@@ -314,6 +259,59 @@ class GCCBuilds:
         nfw.build(rule="phony", inputs=relative_output_name, outputs=library_name)
 
         nfw.newline()
+
+    def get_required_library_information(self, build, parsed_toml):
+        requires = build.get("requires", [])
+        if not requires:
+            return [], [], []
+
+        library_names = []
+        library_paths = []
+        library_types = []
+        for required in requires:
+            the_dep = find_build(required, parsed_toml["builds"])
+            library_types.append(the_dep["buildRule"])
+            library_names.append(the_dep["outputName"])
+            dep_name = the_dep["name"]
+            library_paths.append(dep_name)
+
+        library_paths = prepend_paths(build["build_dir"], library_paths)
+        library_paths = PrefixLibraryPath(library_paths)
+        return library_names, PrefixLibrary(library_names), library_paths, library_types
+
+    def get_rpath(self, build: Dict, parsed_toml: Dict):
+        # Good blog post about rpath:
+        # https://medium.com/@nehckl0/creating-relocatable-linux-executables-by-setting-rpath-with-origin-45de573a2e98
+        requires = build.get("requires", [])
+        library_paths = []
+
+        for required in requires:
+            the_dep = find_build(required, parsed_toml["builds"])
+            if the_dep["buildRule"] == "dynamiclib":
+                library_paths.append(the_dep["name"])
+
+        build_dir = Path(build["build_dir"]).resolve()
+        current_build_dir = build_dir / build["name"]
+        library_paths = prepend_paths(build_dir, library_paths)
+        relative_paths = [
+            relpath(Path(lib_path), current_build_dir) for lib_path in library_paths
+        ]
+
+        relative_paths = [f"$$ORIGIN/{rel_path}" for rel_path in relative_paths]
+        relative_paths = ["$$ORIGIN"] + relative_paths
+
+        relative_paths_string = escape_path(":".join(relative_paths))
+        return f"-Wl,-rpath='{relative_paths_string}'"
+
+    # TODO: These should take version strings as well.
+    def add_static_library_naming_convention(self, library_name):
+        return f"lib{library_name}.a"
+
+    def add_dynamic_library_naming_convention(self, library_name):
+        return f"lib{library_name}.so"
+
+    def add_exe_naming_convention(self, exe_name):
+        return f"{exe_name}.exe"
 
 
 def log_build_information(build):

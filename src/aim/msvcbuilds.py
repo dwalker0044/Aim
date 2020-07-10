@@ -1,5 +1,5 @@
 import functools
-
+from typing import Dict
 from ninja_syntax import Writer
 
 from aim.msvcbuildrules import *
