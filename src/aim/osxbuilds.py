@@ -31,11 +31,7 @@ def get_rpath(build: Dict, parsed_toml: Dict):
     return f"-rpath '{relative_paths_string}'"
 
 
-
 class OsxBuilds(GCCBuilds):
-    def __init__(self, cxx_compiler, c_compiler, archiver):
-        super().__init__(cxx_compiler, c_compiler, archiver)
-
     def add_rules(self, build):
         directory = build["build_dir"]
         ninja_path = directory / "rules.ninja"

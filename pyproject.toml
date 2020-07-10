@@ -15,6 +15,7 @@ tabulate = "^0.8.7"
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.6.0"
 black = "^19.10b0"
+pylint = "^2.5.3"
 
 [tool.poetry.scripts]
 aim = "aim.main:entry"

@@ -41,11 +41,10 @@ def get_library_information(build):
 
 
 def find_build(build_name, builds):
+    # Note, this should never fail, as required dependencies are checked by the schema.
     for build in builds:
         if build["name"] == build_name:
             return build
-    else:
-        raise RuntimeError(f"Failed to find build with name: {build_name}")
 
 
 class GCCBuilds:
@@ -263,7 +262,7 @@ class GCCBuilds:
     def get_required_library_information(self, build, parsed_toml):
         requires = build.get("requires", [])
         if not requires:
-            return [], [], []
+            return [], [], [], []
 
         library_names = []
         library_paths = []
