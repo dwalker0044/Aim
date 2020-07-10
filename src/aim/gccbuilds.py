@@ -303,6 +303,16 @@ class GCCBuilds:
         relative_paths_string = escape_path(":".join(relative_paths))
         return f"-Wl,-rpath='{relative_paths_string}'"
 
+    def add_naming_convention(self, output_name, build_type):
+        if build_type == "staticlib":
+            new_name = self.add_static_library_naming_convention(output_name)
+        elif build_type == "dynamiclib":
+            new_name = self.add_dynamic_library_naming_convention(output_name)
+        else:
+            new_name = self.add_exe_naming_convention(output_name)
+
+        return new_name
+
     # TODO: These should take version strings as well.
     def add_static_library_naming_convention(self, library_name):
         return f"lib{library_name}.a"

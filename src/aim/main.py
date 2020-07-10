@@ -31,7 +31,7 @@ def run_ninja(working_dir, build_name):
         print(result.stderr.decode("utf-8"))
 
 
-def parse_toml_file(parsed_toml, project_dir: Path, build_dir: Path):
+def run_ninja_generation(parsed_toml, project_dir: Path, build_dir: Path):
     compiler_c = parsed_toml["cc"]
     compiler_cpp = parsed_toml["cxx"]
     archiver = parsed_toml["ar"]
@@ -45,8 +45,6 @@ def parse_toml_file(parsed_toml, project_dir: Path, build_dir: Path):
         build_info["build_dir"] = build_dir
         build_info["flags"] = flags
         build_info["defines"] = defines
-
-        # generate_build_rules(builder, project_dir, build_dir, parsed_toml)
 
         if frontend == "msvc":
             builder = msvcbuilds.MSVCBuilds(compiler_cpp, compiler_c, archiver)
@@ -67,18 +65,25 @@ def entry():
     init_parser = sub_parser.add_parser("init", help="Initialise the current directory")
 
     build_parser = sub_parser.add_parser("build", help="The build name")
+    build_parser.add_argument("build", type=str, help="The build name")
+
     build_parser.add_argument(
-        "--target", type=str, required=True, help="The build target name"
+        "--target", type=str, help="Path to target file directory"
     )
 
-    build_parser.add_argument("--path", type=str, help="Path to target directory")
+    build_parser = sub_parser.add_parser("list", help="List the builds for the target")
+    build_parser.add_argument(
+        "--target", type=str, help="Path to target file directory"
+    )
 
     args = parser.parse_args()
     mode = args.command
     if mode == "init":
         run_init()
     elif mode == "build":
-        run_build(args.target, args.path)
+        run_build(args.build, args.target)
+    elif mode == "list":
+        run_list(args.target)
     else:
         import sys
 
@@ -255,12 +260,8 @@ def run_build(build_name, target_path):
     with toml_path.open("r") as toml_file:
         parsed_toml = toml.loads(toml_file.read())
 
-        # Check that the build exists before doing any work.
         builds = parsed_toml["builds"]
         the_build = find_build(build_name, builds)
-
-        # with ninja_path.open("w+") as ninja_file:
-        #     ninja_writer = Writer(ninja_file)
 
         root_dir = parsed_toml["projectRoot"]
         project_dir = (build_dir / root_dir).resolve()
@@ -271,9 +272,52 @@ def run_build(build_name, target_path):
         except RuntimeError as e:
             print(f"Error: {e.args[0]}")
             exit(-1)
-        parse_toml_file(parsed_toml, project_dir, build_dir)
+        run_ninja_generation(parsed_toml, project_dir, build_dir)
 
         run_ninja(build_dir, the_build["name"])
+
+
+def run_list(target_path):
+    build_dir = Path().cwd()
+
+    if target_path:
+        target_path = Path(target_path)
+        if target_path.is_absolute():
+            build_dir = target_path
+        else:
+            build_dir = build_dir / Path(target_path)
+
+    toml_path = build_dir / "target.toml"
+
+    with toml_path.open("r") as toml_file:
+        parsed_toml = toml.loads(toml_file.read())
+
+        builds = parsed_toml["builds"]
+
+        frontend = parsed_toml["compilerFrontend"]
+
+        if frontend == "msvc":
+            builder = msvcbuilds.MSVCBuilds("", "", "")
+        elif frontend == "osx":
+            builder = osxbuilds.OsxBuilds("", "", "")
+        else:
+            builder = gccbuilds.GCCBuilds("", "", "")
+
+        header = ["Item", "Name", "Build Rule", "Output Name"]
+        table = []
+
+        for number, build in enumerate(builds):
+            output_name = builder.add_naming_convention(
+                build["outputName"], build["buildRule"]
+            )
+            row = [number, build["name"], build["buildRule"], output_name]
+            table.append(row)
+
+        from tabulate import tabulate
+
+        print()
+        print(tabulate(table, header))
+        print()
 
 
 if __name__ == "__main__":
