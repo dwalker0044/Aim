@@ -31,26 +31,6 @@ def get_rpath(build: Dict, parsed_toml: Dict):
     return f"-rpath '{relative_paths_string}'"
 
 
-def get_required_library_information(build, parsed_toml):
-    requires = build.get("requires", [])
-    if not requires:
-        return [], [], []
-
-    library_names = []
-    library_paths = []
-    library_types = []
-    for required in requires:
-        the_dep = find_build(required, parsed_toml["builds"])
-        output_name: str = the_dep["outputName"]
-        library_names.append(output_name)
-        dep_name = the_dep["name"]
-        library_paths.append(dep_name)
-        library_types.append(the_dep["buildRule"])
-
-    library_paths = prepend_paths(build["build_dir"], library_paths)
-    library_paths = PrefixLibraryPath(library_paths)
-    return library_names, PrefixLibrary(library_names), library_paths
-
 
 class OsxBuilds(GCCBuilds):
     def __init__(self, cxx_compiler, c_compiler, archiver):
@@ -65,9 +45,6 @@ class OsxBuilds(GCCBuilds):
             add_ar(writer)
             add_exe(writer)
             add_shared(writer)
-
-    def get_required_library_information(self, build, parsed_toml):
-        return get_required_library_information(build, parsed_toml)
 
     def get_rpath(self, build: Dict, parsed_toml: Dict):
         return get_rpath(build, parsed_toml)
