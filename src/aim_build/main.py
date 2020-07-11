@@ -3,12 +3,12 @@ import subprocess
 
 import toml
 
-from aim import gccbuilds
-from aim import msvcbuilds
-from aim import osxbuilds
-from aim.schema import target_schema
-from aim.utils import *
-from aim.version import __version__
+from aim_build import gccbuilds
+from aim_build import msvcbuilds
+from aim_build import osxbuilds
+from aim_build.schema import target_schema
+from aim_build.utils import *
+from aim_build.version import __version__
 
 
 def find_build(build_name, builds):

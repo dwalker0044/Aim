@@ -1,4 +1,4 @@
-from aim.typedefs import StringList
+from aim_build.typedefs import StringList
 
 
 def add_compile(nfw):

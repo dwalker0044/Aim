@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import List, Union
 
-from aim.typedefs import PathList, StringList, T
+from aim_build.typedefs import PathList, StringList, T
 
 
 def src_to_obj(files) -> StringList:

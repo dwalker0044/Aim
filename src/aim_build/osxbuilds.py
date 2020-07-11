@@ -1,9 +1,9 @@
 from typing import Dict
 from pathlib import Path
-from aim.utils import prepend_paths, relpath, escape_path
-from aim.gccbuilds import GCCBuilds
-from aim.gccbuilds import find_build, PrefixLibraryPath, PrefixLibrary
-from aim.osxbuildrules import *
+from aim_build.utils import prepend_paths, relpath, escape_path
+from aim_build.gccbuilds import GCCBuilds
+from aim_build.gccbuilds import find_build, PrefixLibraryPath, PrefixLibrary
+from aim_build.osxbuildrules import *
 
 
 def get_rpath(build: Dict, parsed_toml: Dict):

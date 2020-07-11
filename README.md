@@ -123,7 +123,7 @@ projectRoot = "../.."                   # the relative path from the target buil
 cxx = "clang++"                         # the cxx compiler to use.
 cc = "clang"                            # the cc compiler to use.
 ar = "llvm-ar"                          # the archiver to use.
-compilerFrontend="gcc"                  # informs aim of which additional flags to include at various stages of the build.
+compilerFrontend="gcc"                  # informs aim_build of which additional flags to include at various stages of the build.
 
 flags = [                               # compiler flags pass to all build targets.
     "-std=c++17",

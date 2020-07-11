@@ -2,8 +2,8 @@ import functools
 from typing import Dict
 from ninja_syntax import Writer
 
-from aim.msvcbuildrules import *
-from aim.utils import *
+from aim_build.msvcbuildrules import *
+from aim_build.utils import *
 
 PrefixIncludePath = functools.partial(prefix, "/I")
 PrefixLibraryPath = functools.partial(prefix, "/LIBPATH:")

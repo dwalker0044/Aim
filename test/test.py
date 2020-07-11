@@ -1,6 +1,6 @@
 import toml
 
-from aim.schema import target_schema
+from aim_build.schema import target_schema
 
 TargetFile = """
 unknown = ""
@@ -75,5 +75,5 @@ def check_validation():
     target_schema(parsed_toml)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     check_validation()

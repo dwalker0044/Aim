@@ -1,7 +1,7 @@
 import functools
 from typing import Dict
-from aim.gccbuildrules import *
-from aim.utils import *
+from aim_build.gccbuildrules import *
+from aim_build.utils import *
 
 PrefixIncludePath = functools.partial(prefix, "-I")
 PrefixLibraryPath = functools.partial(prefix, "-L")
