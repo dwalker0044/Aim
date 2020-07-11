@@ -3,174 +3,82 @@
 </p>
 
 # Aim
+Aim is a command line tool for building C++ projects. Its primary goal is to simplify building C++ libraries and executables, for different build targets, whilst being easy to use and fast.
 
-Aim is a command line tool for building C++ projects.
+A build target is some combination of _things_ that affects the output binary. This could be some combination of operating system, compiler and build type and maybe more. For example, the build target `linux-clang++-release` indicates that this is a `release` build, using the `clang++` compiler for the `linux` operating system.
 
-Aim attempts to make building C++ projects, for different targets, as simple as possible.
-A build target is some combination of operating system, compiler and build type (and possibly other things). For example `linux-clang++-release`.
+Support for a build target is added by writing a `target.toml` file. For more information on the `toml` file format see the [toml github page](https://github.com/toml-lang/toml). 
+Each `target.toml` file must be written out in full for each target that you need to support. There is no way for target files to share information or to depend on another. While this leads to duplication between target files, it makes them very explicit and makes debugging builds much easier.
 
-Support for a build target is added by writing a target file in TOML format. 
-Each build target has its own `target.toml` file and must be written out in full for each target that you need to support.
-While the duplication may be a bit annoying, build errors are far easier to debug.
-
-Aim doesn't try to be too clever although it does add a few compiler flags to make building and using libraries simpler.
-
-## Limitations
-* Currently only supports Linux.
-* Some Windows support via LLVM but hasn't been tested for a while.
+## Known Limitations
+* Windows support is still in development.
 
 ## Why another build tool?
-Other build tools are far too difficult to use. Aim allows you to partition a project into a executables, static libraries
-and shared libraries for any number of different build targets (Debug, Release, Sanitized). All builds occur in their own
-directory and dependency tracking is managed by Ninja.
+Aim is an attempt to make building C++ projects as simple as possible. It is very easy to add libraries and other executables to a project. Other build tools seem overly complex and require users to learn new sytaxes. 
 
-All you have to do is write the `target.toml` file. It is very easy. No weird new syntax that you'll probably
-use nowhere else.
+With Aim:
+* adding build targets is simple and explicit
+* all builds occur in their own directory by default
+* builds are fast and reliable executed by the `ninja` build system.
+
+All you have to do is write the `target.toml` file. It is very easy.
+
 
 ## Getting Started
-Aim is a python project. It uses [poetry](https://python-poetry.org/) for the dependency manager.
-
-Currently there is no installer and so installation must be done using `poetry` (see Installing below).
-
 ### Prerequisites
-* Python 3.7 or above.
-* [poetry](https://python-poetry.org/)
+Aim requires the following dependencies:
+* [python](https://www.python.org/) - version 3.7 or above.
+* [ninja](https://ninja-build.org/)
+* [poetry](https://python-poetry.org/) - for development only
 
-### Installing
-
-<img src="https://github.com/diwalkerdev/Assets/blob/master/Aim/aim-installation.gif?raw=true" width="600px">
-
-Clone the project.
-
-Then install the dependencies (this also creates a virtual environment):
+### Installation
+Aim is a `python` project and is installed using `pip`.
 
 ```
-poetry install
-```
-
-Unfortunately, unlike `setuptools` there is no means to do a 'dev install' using poetry. So simplest thing to, in order to use Aim, is to create an alias. The alias adds Aim to `PYTHONPATH` to resolve import/module paths and then uses Python in the virtualenv created by poetry to run Aim.
-
-For `bash`:
-```
-alias aim="PYTHONPATH=$PWD/src $(poetry env info -p)/bin/python $PWD/src/aim/main.py"
-```
-
-For `fish` shell:
-```
-alias aim="PYTHONPATH=$PWD/src "(poetry env info -p)"/bin/python $PWD/src/aim/main.py"
-```
-
-Check the alias works correctly:
-
-```
-aim --help
-```
-
-You should see something similar to:
-```
-usage: aim [-h] [-v] {init,build} ...
-
-Aim C++ build tool. For more help run aim <command> --help
-
-positional arguments:
-  {init,build}   Commands
-    init         Initialise the current directory
-    build        The build name
-
-optional arguments:
-  -h, --help     show this help message and exit
-  -v, --version  show program's version number and exit
-
+pip install --user aim-build
 ```
 
 ### Using
 
 <img src="https://github.com/diwalkerdev/Assets/blob/master/Aim/aim-init-demo.gif?raw=true" width="600px">
 
-Create a folder for your project and `cd` into it. For example: `AimDemoProject`.
+Note, `aim init` has an optional flag `--demo`. This adds some simple source files to the project for demonstration purposes.
 
-Now initialise the directory:
+There are 3 main commands:
+* `list` - Displays the builds for the target
+* `init` - Creates a project structure
+* `build` - Executes a build
 
+For more information run:
 ```
-mkdir AimDemoProject
-cd AimDemoProject
-aim init
-```
-
-The following output will be displayed:
-
-```
-Creating directories...
-	/home/username/AimDemoProject/headers
-	/home/username/AimDemoProject/src
-	/home/username/AimDemoProject/lib
-	/home/username/AimDemoProject/builds
-Creating common build targets...
-	/home/username/AimTest/builds/windows-clang_cl-debug/target.toml
-	/home/username/AimTest/builds/windows-clang_cl-release/target.toml
-	/home/username/AimTest/builds/linux-clang++-debug/target.toml
-	/home/username/AimTest/builds/linux-clang++-release/target.toml
+aim <command> --help
 ```
 
-Aim has created some folders for your project and some build targets for you. Don't feel like you have to keep to the project structure, you can modify the target files to point to any directory.
+## Developing Aim
 
-Aim has create some common build targets: `Windows` and `Linux` operating systems, using `clang_cl` compiler for Windows and `clang++` for Linux, and `debug` and `release` builds created for each. Simply add/delete target directories as required.
+Aim is a Python project and uses the [poetry](https://python-poetry.org/) dependency manager. See [poetry installation](https://python-poetry.org/docs/#installation) for instructions.
 
-Let's take a look at the `linux-clang++-debug/target.toml` file:
-
-```toml
-projectRoot = "../.."                   # the relative path from the target build directory to the project src directory.
-cxx = "clang++"                         # the cxx compiler to use.
-cc = "clang"                            # the cc compiler to use.
-ar = "llvm-ar"                          # the archiver to use.
-compilerFrontend="gcc"                  # informs aim_build of which additional flags to include at various stages of the build.
-
-flags = [                               # compiler flags pass to all build targets.
-    "-std=c++17",
-    "-g"
-]
-
-defines = []                            # defines passed to all build targets.
-
-[[builds]]                              # a list of builds.
-    name = "lib_calculator"             # the unique name for this build.
-    buildRule = "staticlib"             # the type of build, in this case create a static library.
-    outputName = "libCalculator.a"      # the library output name,
-    srcDirs = ["../../lib"]             # the src directories  to build the static library from.
-    includePaths = ["../../include"]   # additional include paths to use during the build.
-
-#[[builds]]
-#    name = "lib_calculator_so"         # the unique name for this build.
-#    buildRule = "dynamiclib"           # the type of build, in this case create a shared library.
-#    outputName = "libCalculator.so"    # the library output name,
-#    srcDirs = ["../../lib"]            # the src directories to build the shared library from.
-#    includePaths = ["../../include"]  # additional include paths to use during the build.
-
-[[builds]]
-    name = "exe"                        # the unique name for this build.
-    buildRule = "exe"                   # the type of build, in this case an executable.
-    requires = ["lib_calculator"]       # build dependencies. Aim figures out the linker flags for you.
-    outputName = "the_calculator.exe"   # the exe output name,
-    srcDirs = ["../../src"]             # the src directories to build the shared library from.
-    includePaths = ["../../include"]   # additional include paths to use during the build.
-    #libraryPaths = []                   # additional library paths, used for including third party libraries.
-    #libraries = []                      # additional libraries, used for including third party libraries.
-```
-For the complete set of options, please refer to `src/aim/schema.py`.
-
-All paths a relative to the target build directory hence why things like the `srcDirs` need to be prefixed with `../../`. 
-This will change in the near future.
-
-`init` adds a very simple `main.cpp` and calculator library library to the project. By default the library
-is built as a static library. You can replace the `lib_calculator` build with with the `lib_calculator_so` build if you
-want the library to be created as a dynamic library. When using dynamic libraries Aim will update `rpath` to include
-any dynamic libraries that an executable uses.
-
-Build and run the project:
+Once you have cloned the project, the virtual environment and dependencies can be installed simply by executing:
 
 ```
-aim build --target exe --path builds/linux-clang++-debug/
-./builds/linux-clang++-debug/exe/the_calculator.exe
+poetry install
+```
+
+### Dev Install
+Unfortunately, unlike `setuptools`, there is no means to do a 'dev install' using poetry. A dev install causes a command line script to use the current development code which is useful so a project does not need to be reinstalled after every modification. 
+
+In order to use Aim on the command line, is it recommended to create an alias. The alias needs to:
+* adds Aim to `PYTHONPATH` to resolve import/module paths 
+* execute the main Aim script using virtualenv's python
+
+For `bash` this looks like:
+```
+alias aim="PYTHONPATH=$PWD/src $(poetry env info -p)/bin/python $PWD/src/aim_build/main.py"
+```
+
+For `fish` shell this looks like:
+```
+alias aim="PYTHONPATH=$PWD/src "(poetry env info -p)"/bin/python $PWD/src/aim_build/main.py"
 ```
 
 ## Other remarks
