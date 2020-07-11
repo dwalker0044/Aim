@@ -62,12 +62,20 @@ def entry():
 
     parser.add_argument("-v", "--version", action="version", version=__version__)
     sub_parser = parser.add_subparsers(dest="command", help="Commands")
-    init_parser = sub_parser.add_parser("init", help="Initialise the current directory")
+
+    build_parser = sub_parser.add_parser(
+        "list", help="Displays the builds for the target"
+    )
+    build_parser.add_argument(
+        "--target", type=str, help="Path to target file directory"
+    )
+
+    init_parser = sub_parser.add_parser("init", help="Creates a project structure.")
     init_parser.add_argument(
         "--demo", help="Create additional demo files", action="store_true"
     )
 
-    build_parser = sub_parser.add_parser("build", help="The build name")
+    build_parser = sub_parser.add_parser("build", help="Executes a build")
     build_parser.add_argument("build", type=str, help="The build name")
 
     build_parser.add_argument(
@@ -78,11 +86,6 @@ def entry():
         "--skip_ninja_regen",
         help="By-pass the ninja file generation step",
         action="store_true",
-    )
-
-    build_parser = sub_parser.add_parser("list", help="List the builds for the target")
-    build_parser.add_argument(
-        "--target", type=str, help="Path to target file directory"
     )
 
     args = parser.parse_args()
