@@ -11,15 +11,20 @@
 ![GitHub](https://img.shields.io/github/license/diwalkerdev/aim)
 
 # Aim
-Aim is a command line tool for building C++ projects. Its primary goal is to simplify building C++ libraries and executables, for different build targets, whilst being easy to use and fast.
+Aim is a command line tool for building C++ projects. 
 
-A build target is some combination of _things_ that affects the output binary. This could be some combination of operating system, compiler and build type and maybe more. For example, the build target `linux-clang++-release` indicates that this is a `release` build, using the `clang++` compiler for the `linux` operating system.
+Project goals:
+ * Simplify building C++ projects
+ * Clear, easy to understand mechanism for supporting different **build targets**\*
+ * Rapid dependency resolution and builds provided by [ninja](https://ninja-build.org/)
+ * Easy to use - builds are managed using a `toml` file
 
-Support for a build target is added by writing a `target.toml` file. For more information on the `toml` file format see the [toml github page](https://github.com/toml-lang/toml). 
-Each `target.toml` file must be written out in full for each target that you need to support. There is no way for target files to share information or to depend on another. While this leads to duplication between target files, it makes them very explicit and makes debugging builds much easier.
+\* A **build target** is some combination of _things_ that affects the output binary. See Methodology for more information.
+
 
 ## Known Limitations
 * Windows support is still in development.
+
 
 ## Why another build tool?
 Aim is an attempt to make building C++ projects as simple as possible. It is very easy to add libraries and other executables to a project. Other build tools seem overly complex and require users to learn new sytaxes. 
@@ -30,6 +35,32 @@ With Aim:
 * builds are fast and reliable executed by the `ninja` build system.
 
 All you have to do is write the `target.toml` file. It is very easy.
+
+
+## Methodology
+Aim treats any build variation as its own unique build target. A build target is some combination of _things_ that affects the output binary. This could be variations of:
+ * operating system (Windows, OSX, Gnu Linux)
+ * compiler (MSVC, GCC, Clang)
+ * build type (Release, Debug, Sanitized)
+ * and maybe more. 
+ 
+ Each build target has its own name, which is just some unique identifier that may comprise of the 'parts' that make up the build. For example, the build target `linux-clang++-release` indicates that this is a `release` build, using the `clang++` compiler for the `linux` operating system.
+
+Support for a build target is added by writing a `target.toml` file in a build directory. Each `target.toml` file must be written out in full for each target that you need to support. There is no way for target files to share information or to depend on another. While this leads to duplication between target files, it makes them very explicit and makes debugging builds much easier.
+
+A target file can contain a number of builds. Each build could be a part of the project that builds as static or dyanamic library or as an executable. A build in the `target.toml` file will look roughly like:
+```
+[[builds]]
+    name = "exe"                        # the unique name for this build.
+    buildRule = "exe"                   # the type of build, in this case an executable. But can also be staticlib or dynamiclib.
+    requires = ["lib_adder"]            # the name of a build also built by Aim. Must be library.
+    outputName = "the_calculator"       # the output name, which is either the executable name or the library name.
+    srcDirs = ["src"]                   # the src directories to build the executable library from.
+    includePaths = ["include"]          # additional include paths to use during the build.
+```
+There are additional options depending on the `buildRule`. For a complete list of options see `schema.py`.
+
+When a build is executed, all artifacts are placed in the target's build directory. This keeps your source directory clean and free of clutter.
 
 
 ## Getting Started
