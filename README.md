@@ -4,8 +4,11 @@
 
 ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/diwalkerdev/aim?include_prereleases)
 ![Python package](https://github.com/diwalkerdev/Aim/workflows/Python%20package/badge.svg?branch=dev)
-![GitHub](https://img.shields.io/github/license/diwalkerdev/aim)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aim-build)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/aim-build)
+![GitHub contributors](https://img.shields.io/github/contributors/diwalkerdev/aim)
+![GitHub](https://img.shields.io/github/license/diwalkerdev/aim)
 
 # Aim
 Aim is a command line tool for building C++ projects. Its primary goal is to simplify building C++ libraries and executables, for different build targets, whilst being easy to use and fast.
