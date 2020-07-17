@@ -47,7 +47,8 @@ def run_ninja_generation(parsed_toml, project_dir: Path, build_dir: Path):
         build_info["defines"] = defines
 
         if frontend == "msvc":
-            builder = msvcbuilds.MSVCBuilds(compiler_cpp, compiler_c, archiver)
+            # builder = msvcbuilds.MSVCBuilds(compiler_cpp, compiler_c, archiver)
+            assert False, "MSVC frontend is currently not supported."
         elif frontend == "osx":
             builder = osxbuilds.OsxBuilds(compiler_cpp, compiler_c, archiver)
         else:
