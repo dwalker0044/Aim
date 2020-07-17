@@ -32,6 +32,7 @@ tabulate = "^0.8.7"
 pre-commit = "^2.6.0"
 black = "^19.10b0"
 pylint = "^2.5.3"
+pylint-exit = "^1.2.0"
 
 [tool.poetry.scripts]
 aim = "aim_build.main:entry"
