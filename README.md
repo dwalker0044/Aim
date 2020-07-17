@@ -22,6 +22,8 @@ Project goals:
 
 \* A **build target** is some combination of _things_ that affects the output binary. See Methodology for more information.
 
+See [ShapeAttack](https://github.com/diwalkerdev/ShapeAttack), for a demo of how Aim can be used in a real world example.
+
 
 ## Known Limitations
 * Windows support is still in development.
