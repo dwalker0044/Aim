@@ -1,4 +1,6 @@
 import cerberus
+from pathlib import Path
+from typing import Union
 
 
 class UniqueNameChecker:
@@ -45,37 +47,43 @@ class DirectoriesExistsChecker:
                 break
 
 
-from pathlib import Path
-
-
 class AimCustomValidator(cerberus.Validator):
-    def _check_with_output_naming_convention(self, field, value: str):
-        errors = []
-
+    def _check_with_output_naming_convention(self, field, value: Union[str, list]):
         # if you need more context then you can get it using the line below.
         # if self.document["buildRule"] in ["staticlib", "dynamiclib"]:
 
         # TODO: should we also check that the names are camelCase?
         # TODO: check outputNames are unique to prevent dependency cycle.
 
-        if value.startswith("lib"):
-            error_str = "You should not prefix output names with 'lib'"
-            errors.append(error_str)
+        def check_convention(_field, _value):
+            errors = []
+            if _value.startswith("lib"):
+                error_str = "You should not prefix names with 'lib'."
+                errors.append(error_str)
 
-        suffix = Path(value).suffix
-        if suffix:
-            error_str = f"You should not specify the suffix."
-            errors.append(error_str)
+            suffix = Path(_value).suffix
+            if suffix:
+                error_str = f"You should not specify the suffix."
+                errors.append(error_str)
 
-        if errors:
-            plural = ""
-            if len(errors) > 1:
-                plural = "s"
+            return errors
 
-            error_str = f"Output naming convention error{plural}: {value}. " + " ".join(
-                errors
-            )
-            self._error(field, error_str)
+        # Bit of a hack so strings go through the same code path as lists.
+        if isinstance(value, str):
+            value = [value]
+
+        for item in value:
+            errors = check_convention(field, item)
+
+            if errors:
+                plural = ""
+                if len(errors) > 1:
+                    plural = "s"
+
+                error_str = f"Naming convention error{plural}: {item}. " + " ".join(
+                    errors
+                )
+                self._error(field, error_str)
 
 
 def target_schema(document, project_dir):
@@ -147,6 +155,7 @@ def target_schema(document, project_dir):
                         "empty": False,
                         "schema": {"type": "string"},
                         "dependencies": {"buildRule": ["exe", "dynamiclib"]},
+                        "check_with": "output_naming_convention",
                     },
                 },
             },

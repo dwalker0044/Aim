@@ -68,7 +68,7 @@ def entry():
         "list", help="Displays the builds for the target"
     )
     build_parser.add_argument(
-        "--target", type=str, help="Path to target file directory"
+        "--target", type=str, required=True, help="Path to target file directory"
     )
 
     init_parser = sub_parser.add_parser("init", help="Creates a project structure.")
@@ -80,7 +80,7 @@ def entry():
     build_parser.add_argument("build", type=str, help="The build name")
 
     build_parser.add_argument(
-        "--target", type=str, help="Path to target file directory"
+        "--target", type=str, required=True, help="Path to target file directory"
     )
 
     build_parser.add_argument(

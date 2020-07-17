@@ -3,6 +3,7 @@
 </p>
 
 ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/diwalkerdev/aim?include_prereleases)
+![GitHub commits since latest release (by SemVer including pre-releases)](https://img.shields.io/github/commits-since/diwalkerdev/aim/latest/dev?include_prereleases)
 ![Python package](https://github.com/diwalkerdev/Aim/workflows/Python%20package/badge.svg?branch=dev)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/aim-build)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
@@ -20,6 +21,8 @@ Project goals:
  * Easy to use - builds are managed using a `toml` file
 
 \* A **build target** is some combination of _things_ that affects the output binary. See Methodology for more information.
+
+See [ShapeAttack](https://github.com/diwalkerdev/ShapeAttack), for a demo of how Aim can be used in a real world example.
 
 
 ## Known Limitations
