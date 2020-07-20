@@ -7,9 +7,10 @@ import subprocess
 
 
 def release():
-    ret = subprocess.run(["git", "branch", "--show-current"])
-    if ret.stdout != "dev":
-        print("Please release from dev branch.")
+    ret = subprocess.run(["git", "branch", "--show-current"], capture_output=True)
+    branch_name = ret.stdout.decode("utf-8")[:-1]
+    if branch_name != "dev":
+        print(f"Please release from dev branch. Current branch is {branch_name}")
         exit(-1)
 
     toml_path = Path("pyproject.toml")
