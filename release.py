@@ -7,7 +7,13 @@ import subprocess
 
 
 def release():
+    ret = subprocess.run(["git", "branch", "--show-current"])
+    if ret.stdout != "dev":
+        print("Please release from dev branch.")
+        exit(-1)
+
     toml_path = Path("pyproject.toml")
+
     with toml_path.open("r") as toml_file:
         parsed_toml = toml.loads(toml_file.read())
 
