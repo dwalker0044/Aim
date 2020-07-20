@@ -7,7 +7,13 @@ import subprocess
 
 
 def release():
+    ret = subprocess.run(["git", "branch", "--show-current"])
+    if ret.stdout != "dev":
+        print("Please release from dev branch.")
+        exit(-1)
+
     toml_path = Path("pyproject.toml")
+
     with toml_path.open("r") as toml_file:
         parsed_toml = toml.loads(toml_file.read())
 
@@ -48,6 +54,26 @@ def release():
     with version_path.open("w") as version_file:
         for line in version_info:
             version_file.write(line + os.linesep)
+
+    commands = [
+        ["git", "add", "."],
+        ["git", "commit", "-m", f"Releasing version {new_version_string}"],
+        ["rm", "-rf", "dist"],
+        ["poetry", "build"],
+        # ["poetry", "publish"],
+        # fmt: off
+        ["git", "tag", "-a", f"v{new_version_string}", "-m", f"Release: version {new_version_string}"],
+        # fmt: on
+        ["git", "push"],
+        ["git", "push", "origin", f"v{new_version_string}"],
+    ]
+
+    for command in commands:
+        print(f'{" ".join(command)}')
+        ret = subprocess.run(command, capture_output=True)
+        assert ret.returncode == 0, f"The command {command} failed."
+
+    print("Please run poetry publish manually. Requires authentication.")
 
 
 if __name__ == "__main__":
