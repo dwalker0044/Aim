@@ -47,8 +47,8 @@ def run_ninja_generation(parsed_toml, project_dir: Path, build_dir: Path):
     for build_info in builds:
         build_info["directory"] = project_dir
         build_info["build_dir"] = build_dir
-        build_info["flags"] = flags
-        build_info["defines"] = defines
+        build_info["global_flags"] = flags
+        build_info["global_defines"] = defines
 
         if frontend == "msvc":
             # builder = msvcbuilds.MSVCBuilds(compiler_cpp, compiler_c, archiver)

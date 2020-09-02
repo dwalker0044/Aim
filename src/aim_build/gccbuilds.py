@@ -99,8 +99,8 @@ class GCCBuilds:
                 raise RuntimeError(f"Unknown build type {the_build}.")
 
     def add_compile_rule(self, nfw: Writer, build: Dict, parsed_toml):
-        cxxflags = build["flags"]
-        defines = build["defines"]
+        cxxflags = build["global_flags"] + build.get("flags", [])
+        defines = build["global_defines"] + build.get("defines", [])
 
         src_files = get_src_files(build)
         includes = get_include_paths(build)
@@ -134,8 +134,8 @@ class GCCBuilds:
     def build_static_library(self, nfw: Writer, build: Dict, parsed_toml: Dict):
         build_name = build["name"]
         library_name = self.add_static_library_naming_convention(build["outputName"])
-        cxxflags = build["flags"]
-        defines = build["defines"]
+        cxxflags = build["global_flags"] + build.get("flags", [])
+        defines = build["global_defines"] + build.get("defines", [])
         build_path = build["buildPath"]
 
         includes = get_include_paths(build)
@@ -165,8 +165,8 @@ class GCCBuilds:
     def build_executable(self, nfw, build: Dict, parsed_toml: Dict):
         build_name = build["name"]
         exe_name = self.add_exe_naming_convention(build["outputName"])
-        cxxflags = build["flags"]
-        defines = build["defines"]
+        cxxflags = build["global_flags"] + build.get("flags", [])
+        defines = build["global_defines"] + build.get("defines", [])
         requires = build.get("requires", [])
         build_path = build["buildPath"]
 
@@ -236,8 +236,8 @@ class GCCBuilds:
     def build_dynamic_library(self, nfw, build: Dict, parsed_toml: Dict):
         build_name = build["name"]
         library_name = self.add_dynamic_library_naming_convention(build["outputName"])
-        cxxflags = build["flags"]
-        defines = build["defines"]
+        cxxflags = build["global_flags"] + build.get("flags", [])
+        defines = build["global_defines"] + build.get("defines", [])
 
         includes = get_include_paths(build)
         includes += self.get_required_include_information(build, parsed_toml)
@@ -364,8 +364,8 @@ class GCCBuilds:
 
 def log_build_information(build):
     build_name = build["name"]
-    cxxflags = build["flags"]
-    defines = build["defines"]
+    cxxflags = build["global_flags"] + build.get("flags", [])
+    defines = build["global_defines"] + build.get("defines", [])
     includes = build["includes"]
     library_paths = build["libraryPaths"]
     output = build["outputName"]
