@@ -1,5 +1,6 @@
 import argparse
 import subprocess
+import sys
 
 import toml
 
@@ -20,15 +21,18 @@ def find_build(build_name, builds):
 
 
 def run_ninja(working_dir, build_name):
-    command = ["ninja", f"-C{build_name}", build_name]
+    command = ["ninja", "-v", f"-C{build_name}", build_name]
     command_str = " ".join(command)
     print(f'Executing "{command_str}"')
-    # TODO IMPROVEMENT - we should poll the output of ninja.
-    result = subprocess.run(command, cwd=str(working_dir), capture_output=True)
-    if result.stdout:
-        print(result.stdout.decode("utf-8"))
-    if result.stderr:
-        print(result.stderr.decode("utf-8"))
+
+    process = subprocess.Popen(
+        command, cwd=str(working_dir), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+
+    for line in iter(process.stdout.readline, b""):
+        sys.stdout.write(line.decode("utf-8"))
+    for line in iter(process.stderr.readline, b""):
+        sys.stderr.write(line.decode("utf-8"))
 
 
 def run_ninja_generation(parsed_toml, project_dir: Path, build_dir: Path):
