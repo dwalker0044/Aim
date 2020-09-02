@@ -1,0 +1,34 @@
+projectRoot = ".."
+
+cxx = "clang++"
+cc = "clang"
+ar = "ar"
+compilerFrontend="gcc"
+
+flags = [
+    "-std=c++17",
+]
+
+defines = []
+
+[[builds]]
+    name = "static"
+    buildRule = "staticlib"
+    outputName = "calculator"
+    srcDirs = ["libproject"]
+    includePaths = ["libproject"]
+
+[[builds]]
+    name = "shared"
+    buildRule = "dynamiclib"
+    outputName = "calculator"
+    srcDirs = ["libproject"]
+    includePaths = ["libproject"]
+
+[[builds]]
+    name = "exe"
+    requires = ["shared"]
+    buildRule = "exe"
+    outputName = "project"
+    srcDirs = ["app"]
+    includePaths = ["libproject"]

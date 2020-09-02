@@ -8,12 +8,17 @@ PrefixLibraryPath = functools.partial(prefix, "-L")
 PrefixLibrary = functools.partial(prefix, "-l")
 ToObjectFiles = src_to_o
 
+FileExtensions = ["*.cpp", "*.cc"]
+
 
 def get_src_files(build):
     directory = build["directory"]
     src_dirs = build["srcDirs"]
     src_paths = prepend_paths(directory, src_dirs)
-    src_files = flatten(glob("*.cpp", src_paths))
+    src_files = []
+    for glob_pattern in FileExtensions:
+        glob_files = flatten(glob(glob_pattern, src_paths))
+        src_files += glob_files
     assert src_files, f"Fail to find any source files in {to_str(src_paths)}."
     return src_files
 
@@ -85,7 +90,7 @@ class GCCBuilds:
             ninja_writer.newline()
 
             if the_build == "staticlib":
-                self.build_static_library(ninja_writer, build)
+                self.build_static_library(ninja_writer, build, parsed_toml)
             elif the_build == "exe":
                 self.build_executable(ninja_writer, build, parsed_toml)
             elif the_build == "dynamiclib":
@@ -93,12 +98,13 @@ class GCCBuilds:
             else:
                 raise RuntimeError(f"Unknown build type {the_build}.")
 
-    def add_compile_rule(self, nfw: Writer, build: Dict):
-        cxxflags = build["flags"]
-        defines = build["defines"]
+    def add_compile_rule(self, nfw: Writer, build: Dict, parsed_toml):
+        cxxflags = build["global_flags"] + build.get("flags", [])
+        defines = build["global_defines"] + build.get("defines", [])
 
         src_files = get_src_files(build)
         includes = get_include_paths(build)
+        includes += self.get_required_include_information(build, parsed_toml)
 
         # Its very important to specify the absolute path to the obj files.
         # This prevents recompilation of files when an exe links against a library.
@@ -125,34 +131,48 @@ class GCCBuilds:
 
         return obj_files
 
-    def build_static_library(self, nfw: Writer, build: Dict):
-        # build_name = build["name"]
+    def build_static_library(self, nfw: Writer, build: Dict, parsed_toml: Dict):
+        build_name = build["name"]
         library_name = self.add_static_library_naming_convention(build["outputName"])
-
-        obj_files = self.add_compile_rule(nfw, build)
+        cxxflags = build["global_flags"] + build.get("flags", [])
+        defines = build["global_defines"] + build.get("defines", [])
         build_path = build["buildPath"]
+
+        includes = get_include_paths(build)
+        includes += self.get_required_include_information(build, parsed_toml)
+
+        obj_files = self.add_compile_rule(nfw, build, parsed_toml)
+
         relative_output_name = str(build_path / library_name)
 
         nfw.build(
             outputs=relative_output_name,
             rule="archive",
             inputs=to_str(obj_files),
-            variables={"archiver": self.archiver},
+            variables={
+                "archiver": self.archiver,
+                "includes": includes,
+                "flags": cxxflags,
+                "defines": defines,
+            },
         )
         nfw.newline()
 
         nfw.build(rule="phony", inputs=relative_output_name, outputs=library_name)
+        nfw.build(rule="phony", inputs=library_name, outputs=build_name)
         nfw.newline()
 
     def build_executable(self, nfw, build: Dict, parsed_toml: Dict):
         build_name = build["name"]
         exe_name = self.add_exe_naming_convention(build["outputName"])
-        cxxflags = build["flags"]
-        defines = build["defines"]
+        cxxflags = build["global_flags"] + build.get("flags", [])
+        defines = build["global_defines"] + build.get("defines", [])
         requires = build.get("requires", [])
         build_path = build["buildPath"]
 
         includes = get_include_paths(build)
+        includes += self.get_required_include_information(build, parsed_toml)
+
         library_paths = get_library_paths(build)
         (
             requires_libraries,
@@ -177,7 +197,7 @@ class GCCBuilds:
             nfw.subninja(escape_path(str(ninja_file)))
             nfw.newline()
 
-        obj_files = self.add_compile_rule(nfw, build)
+        obj_files = self.add_compile_rule(nfw, build, parsed_toml)
 
         # Here we just need to manage the fact that the linker's library flag (-l) needs the library name without
         # lib .a/.so but the build dependency rule does need the full convention to find the build rule in the library's
@@ -203,6 +223,7 @@ class GCCBuilds:
                 "includes": includes,
                 "flags": cxxflags,
                 "defines": defines,
+                # TODO: what does exe_name do?
                 "exe_name": exe_name,
                 "linker_args": " ".join(linker_args),
             },
@@ -213,18 +234,21 @@ class GCCBuilds:
         nfw.newline()
 
     def build_dynamic_library(self, nfw, build: Dict, parsed_toml: Dict):
-        # build_name = build["name"]
+        build_name = build["name"]
         library_name = self.add_dynamic_library_naming_convention(build["outputName"])
-        cxxflags = build["flags"]
-        defines = build["defines"]
+        cxxflags = build["global_flags"] + build.get("flags", [])
+        defines = build["global_defines"] + build.get("defines", [])
 
         includes = get_include_paths(build)
+        includes += self.get_required_include_information(build, parsed_toml)
+
         library_paths = get_library_paths(build)
 
         (
             requires_libraries,
             requires_link_libraries,
             requires_library_paths,
+            requires_library_types,
         ) = self.get_required_library_information(build, parsed_toml)
         libraries, link_libraries = get_library_information(build)
 
@@ -235,7 +259,7 @@ class GCCBuilds:
             + link_libraries
         )
 
-        obj_files = self.add_compile_rule(nfw, build)
+        obj_files = self.add_compile_rule(nfw, build, parsed_toml)
 
         build_path = build["buildPath"]
         relative_output_name = str(build_path / library_name)
@@ -256,7 +280,7 @@ class GCCBuilds:
         nfw.newline()
 
         nfw.build(rule="phony", inputs=relative_output_name, outputs=library_name)
-
+        nfw.build(rule="phony", inputs=library_name, outputs=build_name)
         nfw.newline()
 
     def get_required_library_information(self, build, parsed_toml):
@@ -277,6 +301,21 @@ class GCCBuilds:
         library_paths = prepend_paths(build["build_dir"], library_paths)
         library_paths = PrefixLibraryPath(library_paths)
         return library_names, PrefixLibrary(library_names), library_paths, library_types
+
+    def get_required_include_information(self, build, parsed_toml):
+        requires = build.get("requires", [])
+        if not requires:
+            return []
+
+        include_paths = []
+        for required in requires:
+            the_dep = find_build(required, parsed_toml["builds"])
+            directory = build["directory"]
+            includes = the_dep.get("includePaths", [])
+            includes = prepend_paths(directory, includes)
+            include_paths += includes
+
+        return PrefixIncludePath(include_paths)
 
     def get_rpath(self, build: Dict, parsed_toml: Dict):
         # Good blog post about rpath:
@@ -325,8 +364,8 @@ class GCCBuilds:
 
 def log_build_information(build):
     build_name = build["name"]
-    cxxflags = build["flags"]
-    defines = build["defines"]
+    cxxflags = build["global_flags"] + build.get("flags", [])
+    defines = build["global_defines"] + build.get("defines", [])
     includes = build["includes"]
     library_paths = build["libraryPaths"]
     output = build["outputName"]

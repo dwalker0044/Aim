@@ -100,8 +100,8 @@ def target_schema(document, project_dir):
             "type": "string",
             "allowed": ["msvc", "gcc", "osx"],
         },
-        "flags": {"type": "list", "schema": {"type": "string"}},
-        "defines": {"type": "list", "schema": {"type": "string"}},
+        "flags": {"type": "list", "schema": {"type": "string"}, "empty": False},
+        "defines": {"type": "list", "schema": {"type": "string"}, "empty": False},
         "projectRoot": {"required": True, "type": "string", "empty": False},
         "builds": {
             "required": True,
@@ -113,6 +113,16 @@ def target_schema(document, project_dir):
                         "required": True,
                         "type": "string",
                         "check_with": unique_name_checker.check,
+                    },
+                    "defines": {
+                        "type": "list",
+                        "schema": {"type": "string"},
+                        "default": [],
+                    },
+                    "flags": {
+                        "type": "list",
+                        "schema": {"type": "string"},
+                        "empty": False,
                     },
                     "requires": {
                         "type": "list",
