@@ -8,12 +8,17 @@ PrefixLibraryPath = functools.partial(prefix, "-L")
 PrefixLibrary = functools.partial(prefix, "-l")
 ToObjectFiles = src_to_o
 
+FileExtensions = ["*.cpp", "*.cc"]
+
 
 def get_src_files(build):
     directory = build["directory"]
     src_dirs = build["srcDirs"]
     src_paths = prepend_paths(directory, src_dirs)
-    src_files = flatten(glob("*.cpp", src_paths))
+    src_files = []
+    for glob_pattern in FileExtensions:
+        glob_files = flatten(glob(glob_pattern, src_paths))
+        src_files += glob_files
     assert src_files, f"Fail to find any source files in {to_str(src_paths)}."
     return src_files
 
@@ -225,6 +230,7 @@ class GCCBuilds:
             requires_libraries,
             requires_link_libraries,
             requires_library_paths,
+            requires_library_types,
         ) = self.get_required_library_information(build, parsed_toml)
         libraries, link_libraries = get_library_information(build)
 
