@@ -8,17 +8,22 @@ PrefixLibraryPath = functools.partial(prefix, "-L")
 PrefixLibrary = functools.partial(prefix, "-l")
 ToObjectFiles = src_to_o
 
-FileExtensions = ["*.cpp", "*.cc"]
+FileExtensions = ["*.cpp", "*.cc", ".c"]
 
 
 def get_src_files(build):
     directory = build["directory"]
-    src_dirs = build["srcDirs"]
+    srcs = to_paths(build["srcDirs"])
+    src_dirs = [path for path in srcs if path.is_dir()]
+    explicit_src_files = [path for path in srcs if path.is_file()]
+    explicit_src_files = prepend_paths(directory, explicit_src_files)
     src_paths = prepend_paths(directory, src_dirs)
     src_files = []
     for glob_pattern in FileExtensions:
         glob_files = flatten(glob(glob_pattern, src_paths))
         src_files += glob_files
+
+    src_files += explicit_src_files
     assert src_files, f"Fail to find any source files in {to_str(src_paths)}."
     return src_files
 
@@ -32,7 +37,7 @@ def get_include_paths(build):
 
 
 def get_library_paths(build):
-    directory = build["build_dir"]
+    directory = build["directory"]
     library_paths = build.get("libraryPaths", [])
     library_paths = prepend_paths(directory, library_paths)
     library_paths = PrefixLibraryPath(library_paths)

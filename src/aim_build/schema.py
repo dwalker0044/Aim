@@ -31,19 +31,17 @@ class RequiresExistChecker:
                 error(field, f"{value} does not match any build name. Check spelling.")
 
 
-class DirectoriesExistsChecker:
+class PathChecker:
     def __init__(self, project_dir):
         self.project_dir = project_dir
 
-    def check(self, field, dirs, error):
-        dirs = [(self.project_dir / directory).resolve() for directory in dirs]
+    def check(self, field, paths, error):
+        paths = [(self.project_dir / the_path).resolve() for the_path in paths]
 
-        for directory in dirs:
+        for directory in paths:
+            # Remember paths can now be directories or specific paths to files.
             if not directory.exists():
                 error(field, f"{str(directory)} does not exist.")
-                break
-            if not directory.is_dir():
-                error(field, f"{str(directory)} is not a dir.")
                 break
 
 
@@ -89,7 +87,7 @@ class AimCustomValidator(cerberus.Validator):
 def target_schema(document, project_dir):
     unique_name_checker = UniqueNameChecker()
     requires_exist_checker = RequiresExistChecker(document)
-    dir_exists_checker = DirectoriesExistsChecker(project_dir)
+    path_checker = PathChecker(project_dir)
 
     schema = {
         "cxx": {"required": True, "type": "string"},
@@ -145,19 +143,20 @@ def target_schema(document, project_dir):
                         "empty": False,
                         "type": "list",
                         "schema": {"type": "string"},
-                        "check_with": dir_exists_checker.check,
+                        "check_with": path_checker.check,
                     },
                     "includePaths": {
                         "type": "list",
                         "empty": False,
                         "schema": {"type": "string"},
-                        "check_with": dir_exists_checker.check,
+                        "check_with": path_checker.check,
                     },
                     "libraryPaths": {
                         "type": "list",
                         "empty": False,
                         "schema": {"type": "string"},
-                        "check_with": dir_exists_checker.check,
+                        # you can't check the library dirs as they may not exist if the project not built before.
+                        # "check_with": path_checker.check,
                         "dependencies": {"buildRule": ["exe", "dynamiclib"]},
                     },
                     "libraries": {

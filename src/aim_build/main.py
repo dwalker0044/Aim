@@ -45,6 +45,7 @@ def run_ninja_generation(parsed_toml, project_dir: Path, build_dir: Path):
     defines = parsed_toml.get("defines", [])
     builds = parsed_toml["builds"]
     for build_info in builds:
+        print(f'Generating ninja file for {build_info["name"]}')
         build_info["directory"] = project_dir
         build_info["build_dir"] = build_dir
         build_info["global_flags"] = flags
@@ -75,7 +76,7 @@ def entry():
         "--target", type=str, required=True, help="Path to target file directory"
     )
 
-    init_parser = sub_parser.add_parser("init", help="Creates a project structure.")
+    init_parser = sub_parser.add_parser("init", help="Creates a project structure")
     init_parser.add_argument(
         "--demo", help="Create additional demo files", action="store_true"
     )
@@ -93,6 +94,13 @@ def entry():
         action="store_true",
     )
 
+    build_parser = sub_parser.add_parser(
+        "clobber", help="Deletes all build artefacts for the specified target"
+    )
+    build_parser.add_argument(
+        "--target", type=str, required=True, help="Path to target file directory"
+    )
+
     args = parser.parse_args()
     mode = args.command
     if mode == "init":
@@ -101,6 +109,8 @@ def entry():
         run_build(args.build, args.target, args.skip_ninja_regen)
     elif mode == "list":
         run_list(args.target)
+    elif mode == "clobber":
+        run_clobber(args.target)
     else:
         import sys
 
@@ -263,6 +273,7 @@ def run_init(add_demo_files):
 
 
 def run_build(build_name, target_path, skip_ninja_regen):
+    print("Running build...")
     build_dir = Path().cwd()
 
     if target_path:
@@ -291,6 +302,7 @@ def run_build(build_name, target_path, skip_ninja_regen):
             exit(-1)
 
         if not skip_ninja_regen:
+            print("Generating ninja files...")
             run_ninja_generation(parsed_toml, project_dir, build_dir)
 
         run_ninja(build_dir, the_build["name"])
@@ -337,6 +349,35 @@ def run_list(target_path):
         print()
         print(tabulate(table, header))
         print()
+
+
+def run_clobber(target_path):
+    build_dir = Path().cwd()
+
+    if target_path:
+        target_path = Path(target_path)
+        if target_path.is_absolute():
+            build_dir = target_path
+        else:
+            build_dir = build_dir / Path(target_path)
+
+    assert (build_dir / "target.toml").exists(), (
+        f"Failed to find target.toml file in {str(build_dir)}.\n"
+        "You might be trying to delete a directory that you want to keep."
+    )
+
+    print(f"Clobbering {str(build_dir)}...")
+
+    dir_contents = build_dir.glob("*")
+    for item in dir_contents:
+        if item.name != "target.toml":
+            print(f"Deleting {item.name}")
+            if item.is_dir():
+                import shutil
+
+                shutil.rmtree(str(item))
+            else:
+                os.remove(str(item))
 
 
 if __name__ == "__main__":
