@@ -90,8 +90,7 @@ def target_schema(document, project_dir):
     path_checker = PathChecker(project_dir)
 
     schema = {
-        "cxx": {"required": True, "type": "string"},
-        "cc": {"required": True, "type": "string"},
+        "compiler": {"required": True, "type": "string"},
         "ar": {"required": True, "type": "string"},
         "compilerFrontend": {
             "required": True,
@@ -112,6 +111,7 @@ def target_schema(document, project_dir):
                         "type": "string",
                         "check_with": unique_name_checker.check,
                     },
+                    "compiler": {"required": False, "type": "string"},
                     "defines": {
                         "type": "list",
                         "schema": {"type": "string"},

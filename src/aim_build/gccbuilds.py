@@ -13,18 +13,16 @@ FileExtensions = ["*.cpp", "*.cc", ".c"]
 
 def get_src_files(build):
     directory = build["directory"]
-    srcs = to_paths(build["srcDirs"])
+    srcs = prepend_paths(directory, build["srcDirs"])
     src_dirs = [path for path in srcs if path.is_dir()]
     explicit_src_files = [path for path in srcs if path.is_file()]
-    explicit_src_files = prepend_paths(directory, explicit_src_files)
-    src_paths = prepend_paths(directory, src_dirs)
     src_files = []
     for glob_pattern in FileExtensions:
-        glob_files = flatten(glob(glob_pattern, src_paths))
+        glob_files = flatten(glob(glob_pattern, src_dirs))
         src_files += glob_files
 
     src_files += explicit_src_files
-    assert src_files, f"Fail to find any source files in {to_str(src_paths)}."
+    assert src_files, f"Fail to find any source files in {to_str(src_dirs)}."
     return src_files
 
 
@@ -58,11 +56,6 @@ def find_build(build_name, builds):
 
 
 class GCCBuilds:
-    def __init__(self, cxx_compiler, c_compiler, archiver):
-        self.cxx_compiler = cxx_compiler
-        self.c_compiler = c_compiler
-        self.archiver = archiver
-
     def add_rules(self, build):
         directory = build["build_dir"]
         ninja_path = directory / "rules.ninja"
@@ -104,8 +97,13 @@ class GCCBuilds:
                 raise RuntimeError(f"Unknown build type {the_build}.")
 
     def add_compile_rule(self, nfw: Writer, build: Dict, parsed_toml):
-        cxxflags = build["global_flags"] + build.get("flags", [])
-        defines = build["global_defines"] + build.get("defines", [])
+        local_flags = build.get("flags", None)
+        local_defines = build.get("defines", None)
+        local_compiler = build.get("compiler", None)
+
+        cxxflags = local_flags if local_flags else build["global_flags"]
+        defines = local_defines if local_defines else build["global_defines"]
+        compiler = local_compiler if local_compiler else build["global_compiler"]
 
         src_files = get_src_files(build)
         includes = get_include_paths(build)
@@ -126,7 +124,7 @@ class GCCBuilds:
                 rule="compile",
                 inputs=src_file,
                 variables={
-                    "compiler": self.cxx_compiler,
+                    "compiler": compiler,
                     "includes": includes,
                     "flags": cxxflags,
                     "defines": defines,
@@ -139,8 +137,15 @@ class GCCBuilds:
     def build_static_library(self, nfw: Writer, build: Dict, parsed_toml: Dict):
         build_name = build["name"]
         library_name = self.add_static_library_naming_convention(build["outputName"])
-        cxxflags = build["global_flags"] + build.get("flags", [])
-        defines = build["global_defines"] + build.get("defines", [])
+
+        local_flags = build.get("flags", None)
+        local_defines = build.get("defines", None)
+        local_archiver = build.get("archiver", None)
+
+        cxxflags = local_flags if local_flags else build["global_flags"]
+        defines = local_defines if local_defines else build["global_defines"]
+        archiver = local_archiver if local_archiver else build["global_archiver"]
+
         build_path = build["buildPath"]
 
         includes = get_include_paths(build)
@@ -155,7 +160,7 @@ class GCCBuilds:
             rule="archive",
             inputs=to_str(obj_files),
             variables={
-                "archiver": self.archiver,
+                "archiver": archiver,
                 "includes": includes,
                 "flags": cxxflags,
                 "defines": defines,
@@ -170,8 +175,15 @@ class GCCBuilds:
     def build_executable(self, nfw, build: Dict, parsed_toml: Dict):
         build_name = build["name"]
         exe_name = self.add_exe_naming_convention(build["outputName"])
-        cxxflags = build["global_flags"] + build.get("flags", [])
-        defines = build["global_defines"] + build.get("defines", [])
+
+        local_flags = build.get("flags", None)
+        local_defines = build.get("defines", None)
+        local_compiler = build.get("compiler", None)
+
+        cxxflags = local_flags if local_flags else build["global_flags"]
+        defines = local_defines if local_defines else build["global_defines"]
+        compiler = local_compiler if local_compiler else build["global_compiler"]
+
         requires = build.get("requires", [])
         build_path = build["buildPath"]
 
@@ -224,7 +236,7 @@ class GCCBuilds:
             inputs=to_str(obj_files),
             implicit=full_library_names,
             variables={
-                "compiler": self.cxx_compiler,
+                "compiler": compiler,
                 "includes": includes,
                 "flags": cxxflags,
                 "defines": defines,
@@ -241,8 +253,14 @@ class GCCBuilds:
     def build_dynamic_library(self, nfw, build: Dict, parsed_toml: Dict):
         build_name = build["name"]
         library_name = self.add_dynamic_library_naming_convention(build["outputName"])
-        cxxflags = build["global_flags"] + build.get("flags", [])
-        defines = build["global_defines"] + build.get("defines", [])
+
+        local_flags = build.get("flags", None)
+        local_defines = build.get("defines", None)
+        local_compiler = build.get("compiler", None)
+
+        cxxflags = local_flags if local_flags else build["global_flags"]
+        defines = local_defines if local_defines else build["global_defines"]
+        compiler = local_compiler if local_compiler else build["global_compiler"]
 
         includes = get_include_paths(build)
         includes += self.get_required_include_information(build, parsed_toml)
@@ -274,7 +292,7 @@ class GCCBuilds:
             implicit=requires_libraries,
             outputs=relative_output_name,
             variables={
-                "compiler": self.cxx_compiler,
+                "compiler": compiler,
                 "includes": includes,
                 "flags": " ".join(cxxflags),
                 "defines": " ".join(defines),
@@ -376,7 +394,7 @@ def log_build_information(build):
     output = build["outputName"]
 
     print(f"Running build: f{build_name}")
-    print(f"CXXFLAGS: {cxxflags}")
+    print(f"FLAGS: {cxxflags}")
     print(f"DEFINES: {defines}")
     print(f"INCLUDE_PATHS: {includes}")
     print(f"LIBRARY_PATHS: {library_paths}")

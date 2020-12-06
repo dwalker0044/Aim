@@ -1,7 +1,6 @@
 projectRoot = ".."
 
-cxx = "clang++"
-cc = "clang"
+compiler = "clang++"
 ar = "ar"
 compilerFrontend="gcc"
 
@@ -9,7 +8,6 @@ flags = [
     "-std=c++17",
 ]
 
-defines = []
 
 [[builds]]
     name = "static"

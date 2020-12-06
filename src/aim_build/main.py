@@ -36,8 +36,7 @@ def run_ninja(working_dir, build_name):
 
 
 def run_ninja_generation(parsed_toml, project_dir: Path, build_dir: Path):
-    compiler_c = parsed_toml["cc"]
-    compiler_cpp = parsed_toml["cxx"]
+    compiler = parsed_toml["compiler"]
     archiver = parsed_toml["ar"]
     frontend = parsed_toml["compilerFrontend"]
 
@@ -50,14 +49,16 @@ def run_ninja_generation(parsed_toml, project_dir: Path, build_dir: Path):
         build_info["build_dir"] = build_dir
         build_info["global_flags"] = flags
         build_info["global_defines"] = defines
+        build_info["global_compiler"] = compiler
+        build_info["global_archiver"] = archiver
 
         if frontend == "msvc":
-            # builder = msvcbuilds.MSVCBuilds(compiler_cpp, compiler_c, archiver)
+            # builder = msvcbuilds.MSVCBuilds(compiler, compiler_c, archiver)
             assert False, "MSVC frontend is currently not supported."
         elif frontend == "osx":
-            builder = osxbuilds.OsxBuilds(compiler_cpp, compiler_c, archiver)
+            builder = osxbuilds.OsxBuilds()
         else:
-            builder = gccbuilds.GCCBuilds(compiler_cpp, compiler_c, archiver)
+            builder = gccbuilds.GCCBuilds()
 
         builder.build(build_info, parsed_toml)
 
@@ -70,35 +71,35 @@ def entry():
     sub_parser = parser.add_subparsers(dest="command", help="Commands")
 
     build_parser = sub_parser.add_parser(
-        "list", help="Displays the builds for the target"
+        "list", help="displays the builds for the target"
     )
     build_parser.add_argument(
-        "--target", type=str, required=True, help="Path to target file directory"
+        "--target", type=str, required=True, help="path to target file directory"
     )
 
-    init_parser = sub_parser.add_parser("init", help="Creates a project structure")
+    init_parser = sub_parser.add_parser("init", help="creates a project structure")
     init_parser.add_argument(
         "--demo", help="Create additional demo files", action="store_true"
     )
 
-    build_parser = sub_parser.add_parser("build", help="Executes a build")
+    build_parser = sub_parser.add_parser("build", help="executes a build")
     build_parser.add_argument("build", type=str, help="The build name")
 
     build_parser.add_argument(
-        "--target", type=str, required=True, help="Path to target file directory"
+        "--target", type=str, required=True, help="path to target file directory"
     )
 
     build_parser.add_argument(
         "--skip_ninja_regen",
-        help="By-pass the ninja file generation step",
+        help="by-pass the ninja file generation step",
         action="store_true",
     )
 
     build_parser = sub_parser.add_parser(
-        "clobber", help="Deletes all build artefacts for the specified target"
+        "clobber", help="deletes all build artefacts for the specified target"
     )
     build_parser.add_argument(
-        "--target", type=str, required=True, help="Path to target file directory"
+        "--target", type=str, required=True, help="path to target file directory"
     )
 
     args = parser.parse_args()
