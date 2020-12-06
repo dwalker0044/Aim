@@ -313,6 +313,9 @@ def run_build(build_name, target_path, skip_ninja_regen):
         if not skip_ninja_regen:
             print("Generating ninja files...")
             run_ninja_generation(parsed_toml, project_dir, build_dir)
+            with (build_dir.resolve() / "compile_commands.json").open("w+") as cc:
+                command = ["ninja", "-C", str(build_dir.resolve()), "-t", "compdb"]
+                subprocess.run(command, stdout=cc)
 
         run_ninja(build_dir, the_build["name"])
 
