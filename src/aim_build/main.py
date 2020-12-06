@@ -43,24 +43,32 @@ def run_ninja_generation(parsed_toml, project_dir: Path, build_dir: Path):
     flags = parsed_toml.get("flags", [])
     defines = parsed_toml.get("defines", [])
     builds = parsed_toml["builds"]
-    for build_info in builds:
-        print(f'Generating ninja file for {build_info["name"]}')
-        build_info["directory"] = project_dir
-        build_info["build_dir"] = build_dir
-        build_info["global_flags"] = flags
-        build_info["global_defines"] = defines
-        build_info["global_compiler"] = compiler
-        build_info["global_archiver"] = archiver
 
-        if frontend == "msvc":
-            # builder = msvcbuilds.MSVCBuilds(compiler, compiler_c, archiver)
-            assert False, "MSVC frontend is currently not supported."
-        elif frontend == "osx":
-            builder = osxbuilds.OsxBuilds()
-        else:
-            builder = gccbuilds.GCCBuilds()
+    project_ninja = build_dir / "build.ninja"
+    with project_ninja.open("w+") as project_fd:
+        from ninja_syntax import Writer
 
-        builder.build(build_info, parsed_toml)
+        project_writer = Writer(project_fd)
+        project_writer.include(str(build_dir / "rules.ninja"))
+
+        for build_info in builds:
+            print(f'Generating ninja file for {build_info["name"]}')
+            build_info["directory"] = project_dir
+            build_info["build_dir"] = build_dir
+            build_info["global_flags"] = flags
+            build_info["global_defines"] = defines
+            build_info["global_compiler"] = compiler
+            build_info["global_archiver"] = archiver
+
+            if frontend == "msvc":
+                # builder = msvcbuilds.MSVCBuilds(compiler, compiler_c, archiver)
+                assert False, "MSVC frontend is currently not supported."
+            elif frontend == "osx":
+                builder = osxbuilds.OsxBuilds()
+            else:
+                builder = gccbuilds.GCCBuilds()
+
+            builder.build(build_info, parsed_toml, project_writer)
 
 
 def entry():
@@ -305,6 +313,9 @@ def run_build(build_name, target_path, skip_ninja_regen):
         if not skip_ninja_regen:
             print("Generating ninja files...")
             run_ninja_generation(parsed_toml, project_dir, build_dir)
+            with (build_dir.resolve() / "compile_commands.json").open("w+") as cc:
+                command = ["ninja", "-C", str(build_dir.resolve()), "-t", "compdb"]
+                subprocess.run(command, stdout=cc)
 
         run_ninja(build_dir, the_build["name"])
 

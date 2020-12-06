@@ -137,3 +137,6 @@ dmypy.json
 .ninja_log
 *.ninja
 *.dylib
+
+
+compile_commands.json

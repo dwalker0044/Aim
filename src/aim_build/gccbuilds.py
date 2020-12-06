@@ -66,7 +66,7 @@ class GCCBuilds:
             add_exe(writer)
             add_shared(writer)
 
-    def build(self, build, parsed_toml):
+    def build(self, build, parsed_toml, project_writer: Writer):
         the_build = build["buildRule"]
 
         build_name = build["name"]
@@ -77,24 +77,33 @@ class GCCBuilds:
         build_path.mkdir(parents=True, exist_ok=True)
 
         ninja_path = build_path / "build.ninja"
+        ncompile_path = build_path / "compile.ninja"
         build["buildPath"] = build_path
 
         self.add_rules(build)
 
         with ninja_path.open("w+") as ninja_file:
-            ninja_writer = Writer(ninja_file)
-            rule_path = (build_dir / "rules.ninja").resolve()
-            ninja_writer.include(escape_path(str(rule_path)))
-            ninja_writer.newline()
+            with ncompile_path.open("w+") as compile_file:
+                ninja_writer = Writer(ninja_file)
+                compile_writer = Writer(compile_file)
+                rule_path = (build_dir / "rules.ninja").resolve()
+                ninja_writer.include(escape_path(str(rule_path)))
+                ninja_writer.newline()
 
-            if the_build == "staticlib":
-                self.build_static_library(ninja_writer, build, parsed_toml)
-            elif the_build == "exe":
-                self.build_executable(ninja_writer, build, parsed_toml)
-            elif the_build == "dynamiclib":
-                self.build_dynamic_library(ninja_writer, build, parsed_toml)
-            else:
-                raise RuntimeError(f"Unknown build type {the_build}.")
+                if the_build == "staticlib":
+                    self.build_static_library(
+                        ninja_writer, compile_writer, project_writer, build, parsed_toml
+                    )
+                elif the_build == "exe":
+                    self.build_executable(
+                        ninja_writer, compile_writer, project_writer, build, parsed_toml
+                    )
+                elif the_build == "dynamiclib":
+                    self.build_dynamic_library(
+                        ninja_writer, compile_writer, project_writer, build, parsed_toml
+                    )
+                else:
+                    raise RuntimeError(f"Unknown build type {the_build}.")
 
     def add_compile_rule(self, nfw: Writer, build: Dict, parsed_toml):
         local_flags = build.get("flags", None)
@@ -134,7 +143,9 @@ class GCCBuilds:
 
         return obj_files
 
-    def build_static_library(self, nfw: Writer, build: Dict, parsed_toml: Dict):
+    def build_static_library(
+        self, nfw: Writer, cfw: Writer, pfw: Writer, build: Dict, parsed_toml: Dict
+    ):
         build_name = build["name"]
         library_name = self.add_static_library_naming_convention(build["outputName"])
 
@@ -151,9 +162,11 @@ class GCCBuilds:
         includes = get_include_paths(build)
         includes += self.get_required_include_information(build, parsed_toml)
 
-        obj_files = self.add_compile_rule(nfw, build, parsed_toml)
+        obj_files = self.add_compile_rule(cfw, build, parsed_toml)
 
         relative_output_name = str(build_path / library_name)
+
+        pfw.subninja(str((Path(build_path) / "build.ninja").resolve()))
 
         nfw.build(
             outputs=relative_output_name,
@@ -167,12 +180,15 @@ class GCCBuilds:
             },
         )
         nfw.newline()
+        nfw.include(str((build_path / "compile.ninja").resolve()))
 
         nfw.build(rule="phony", inputs=relative_output_name, outputs=library_name)
         nfw.build(rule="phony", inputs=library_name, outputs=build_name)
         nfw.newline()
 
-    def build_executable(self, nfw, build: Dict, parsed_toml: Dict):
+    def build_executable(
+        self, nfw: Writer, cfw: Writer, pfw: Writer, build: Dict, parsed_toml: Dict
+    ):
         build_name = build["name"]
         exe_name = self.add_exe_naming_convention(build["outputName"])
 
@@ -214,7 +230,7 @@ class GCCBuilds:
             nfw.subninja(escape_path(str(ninja_file)))
             nfw.newline()
 
-        obj_files = self.add_compile_rule(nfw, build, parsed_toml)
+        obj_files = self.add_compile_rule(cfw, build, parsed_toml)
 
         # Here we just need to manage the fact that the linker's library flag (-l) needs the library name without
         # lib .a/.so but the build dependency rule does need the full convention to find the build rule in the library's
@@ -229,6 +245,8 @@ class GCCBuilds:
                 full_library_names.append(
                     self.add_dynamic_library_naming_convention(name)
                 )
+
+        pfw.include(str((Path(build_path) / "compile.ninja").resolve()))
 
         nfw.build(
             outputs=exe_name,
@@ -246,11 +264,15 @@ class GCCBuilds:
             },
         )
         nfw.newline()
+        nfw.include(str((build_path / "compile.ninja").resolve()))
 
+        nfw.newline()
         nfw.build(rule="phony", inputs=exe_name, outputs=build_name)
         nfw.newline()
 
-    def build_dynamic_library(self, nfw, build: Dict, parsed_toml: Dict):
+    def build_dynamic_library(
+        self, nfw: Writer, cfw: Writer, pfw: Writer, build: Dict, parsed_toml: Dict
+    ):
         build_name = build["name"]
         library_name = self.add_dynamic_library_naming_convention(build["outputName"])
 
@@ -282,9 +304,12 @@ class GCCBuilds:
             + link_libraries
         )
 
-        obj_files = self.add_compile_rule(nfw, build, parsed_toml)
+        obj_files = self.add_compile_rule(cfw, build, parsed_toml)
 
         build_path = build["buildPath"]
+
+        pfw.subninja(str((Path(build_path) / "build.ninja").resolve()))
+
         relative_output_name = str(build_path / library_name)
         nfw.build(
             rule="shared",
@@ -301,6 +326,7 @@ class GCCBuilds:
             },
         )
         nfw.newline()
+        nfw.include(str((build_path / "compile.ninja").resolve()))
 
         nfw.build(rule="phony", inputs=relative_output_name, outputs=library_name)
         nfw.build(rule="phony", inputs=library_name, outputs=build_name)
