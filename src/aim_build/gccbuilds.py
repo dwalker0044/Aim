@@ -13,18 +13,16 @@ FileExtensions = ["*.cpp", "*.cc", ".c"]
 
 def get_src_files(build):
     directory = build["directory"]
-    srcs = to_paths(build["srcDirs"])
+    srcs = prepend_paths(directory, build["srcDirs"])
     src_dirs = [path for path in srcs if path.is_dir()]
     explicit_src_files = [path for path in srcs if path.is_file()]
-    explicit_src_files = prepend_paths(directory, explicit_src_files)
-    src_paths = prepend_paths(directory, src_dirs)
     src_files = []
     for glob_pattern in FileExtensions:
-        glob_files = flatten(glob(glob_pattern, src_paths))
+        glob_files = flatten(glob(glob_pattern, src_dirs))
         src_files += glob_files
 
     src_files += explicit_src_files
-    assert src_files, f"Fail to find any source files in {to_str(src_paths)}."
+    assert src_files, f"Fail to find any source files in {to_str(src_dirs)}."
     return src_files
 
 
@@ -104,7 +102,7 @@ class GCCBuilds:
                 raise RuntimeError(f"Unknown build type {the_build}.")
 
     def add_compile_rule(self, nfw: Writer, build: Dict, parsed_toml):
-        cxxflags = build["global_flags"] + build.get("flags", [])
+        cxxflags = build["global_flags"] + build.get("cxxflags", [])
         defines = build["global_defines"] + build.get("defines", [])
 
         src_files = get_src_files(build)
@@ -241,7 +239,7 @@ class GCCBuilds:
     def build_dynamic_library(self, nfw, build: Dict, parsed_toml: Dict):
         build_name = build["name"]
         library_name = self.add_dynamic_library_naming_convention(build["outputName"])
-        cxxflags = build["global_flags"] + build.get("flags", [])
+        cxxflags = build["global_flags"] + build.get("cxxflags", [])
         defines = build["global_defines"] + build.get("defines", [])
 
         includes = get_include_paths(build)
@@ -276,7 +274,7 @@ class GCCBuilds:
             variables={
                 "compiler": self.cxx_compiler,
                 "includes": includes,
-                "flags": " ".join(cxxflags),
+                "cxxflags": " ".join(cxxflags),
                 "defines": " ".join(defines),
                 "lib_name": library_name,
                 "linker_args": " ".join(linker_args),
@@ -369,7 +367,7 @@ class GCCBuilds:
 
 def log_build_information(build):
     build_name = build["name"]
-    cxxflags = build["global_flags"] + build.get("flags", [])
+    cxxflags = build["global_flags"] + build.get("cxxflags", [])
     defines = build["global_defines"] + build.get("defines", [])
     includes = build["includes"]
     library_paths = build["libraryPaths"]

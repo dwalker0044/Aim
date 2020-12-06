@@ -98,7 +98,7 @@ def target_schema(document, project_dir):
             "type": "string",
             "allowed": ["msvc", "gcc", "osx"],
         },
-        "flags": {"type": "list", "schema": {"type": "string"}, "empty": False},
+        "cxxflags": {"type": "list", "schema": {"type": "string"}, "empty": False},
         "defines": {"type": "list", "schema": {"type": "string"}, "empty": False},
         "projectRoot": {"required": True, "type": "string", "empty": False},
         "builds": {
@@ -117,7 +117,7 @@ def target_schema(document, project_dir):
                         "schema": {"type": "string"},
                         "default": [],
                     },
-                    "flags": {
+                    "cxxflags": {
                         "type": "list",
                         "schema": {"type": "string"},
                         "empty": False,

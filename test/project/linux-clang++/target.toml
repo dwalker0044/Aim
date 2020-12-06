@@ -5,11 +5,9 @@ cc = "clang"
 ar = "ar"
 compilerFrontend="gcc"
 
-flags = [
+cxxflags = [
     "-std=c++17",
 ]
-
-defines = []
 
 [[builds]]
     name = "static"
