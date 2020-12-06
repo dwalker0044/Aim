@@ -75,6 +75,7 @@ def release():
         assert ret.returncode == 0, f"The command {command} failed."
 
     print("Please run poetry publish manually. Requires authentication.")
+    print('    poetry publish --username "" --password ""')
 
 
 if __name__ == "__main__":
